@@ -3,7 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>LANMess – Secure LAN Messenger & TUI</title>
+    <title>LANMess — Encrypted LAN Messenger & TUI</title>
+    <meta name="description" content="A LAN-only, end-to-end encrypted messenger with a powerful Terminal User Interface. No cloud. No internet. Just your network.">
     <link rel="icon" type="image/png" href="LANMess.png">
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
@@ -12,174 +13,819 @@
                 extend: {
                     colors: {
                         brand: {
-                            50: '#eff6ff',
-                            100: '#dbeafe',
-                            500: '#3b82f6',
-                            600: '#2563eb',
-                            700: '#1d4ed8',
-                            900: '#1e3a8a',
+                            50: '#eff6ff', 100: '#dbeafe', 200: '#bfdbfe',
+                            300: '#93c5fd', 400: '#60a5fa', 500: '#3b82f6',
+                            600: '#2563eb', 700: '#1d4ed8', 800: '#1e40af',
+                            900: '#1e3a8a', 950: '#172554',
                         }
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'system-ui', 'sans-serif'],
+                        mono: ['JetBrains Mono', 'monospace'],
+                    },
+                    animation: {
+                        'float': 'float 6s ease-in-out infinite',
+                        'glow': 'glow 3s ease-in-out infinite',
+                        'shimmer': 'shimmer 3s linear infinite',
+                        'fade-up': 'fadeUp 0.8s ease-out forwards',
+                        'blink': 'blink 1s step-end infinite',
+                        'pulse-slow': 'pulse 4s cubic-bezier(0.4,0,0.6,1) infinite',
+                        'spin-slow': 'spin 20s linear infinite',
+                        'gradient-x': 'gradientX 6s ease infinite',
+                    },
+                    keyframes: {
+                        float: {
+                            '0%,100%': { transform: 'translateY(0)' },
+                            '50%': { transform: 'translateY(-20px)' },
+                        },
+                        glow: {
+                            '0%,100%': { boxShadow: '0 0 30px rgba(96,165,250,.3)' },
+                            '50%': { boxShadow: '0 0 60px rgba(96,165,250,.6)' },
+                        },
+                        shimmer: {
+                            '0%': { backgroundPosition: '-200% 0' },
+                            '100%': { backgroundPosition: '200% 0' },
+                        },
+                        fadeUp: {
+                            '0%': { opacity: '0', transform: 'translateY(30px)' },
+                            '100%': { opacity: '1', transform: 'translateY(0)' },
+                        },
+                        blink: {
+                            '0%,100%': { opacity: '1' },
+                            '50%': { opacity: '0' },
+                        },
+                        gradientX: {
+                            '0%,100%': { backgroundPosition: '0% 50%' },
+                            '50%': { backgroundPosition: '100% 50%' },
+                        },
                     }
                 }
             }
         }
     </script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
     <style>
-        body { font-family: 'Inter', sans-serif; }
-        code, pre { font-family: 'JetBrains Mono', monospace; }
+        * { -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; }
+        html { scroll-behavior: smooth; }
+        body {
+            font-family: 'Inter', sans-serif;
+            background: #020617;
+            overflow-x: hidden;
+        }
+        code, pre, .mono { font-family: 'JetBrains Mono', monospace; }
+
+        /* Animated mesh background */
+        .mesh-bg {
+            position: fixed;
+            inset: 0;
+            z-index: -1;
+            overflow: hidden;
+            pointer-events: none;
+        }
+        .mesh-blob {
+            position: absolute;
+            border-radius: 50%;
+            filter: blur(120px);
+            opacity: 0.25;
+            animation: blobFloat 20s ease-in-out infinite;
+        }
+        .blob-1 { width: 600px; height: 600px; background: #2563eb; top: -200px; left: -200px; }
+        .blob-2 { width: 500px; height: 500px; background: #7c3aed; top: 40%; right: -200px; animation-delay: -7s; }
+        .blob-3 { width: 400px; height: 400px; background: #0891b2; bottom: -150px; left: 30%; animation-delay: -14s; }
+        @keyframes blobFloat {
+            0%,100% { transform: translate(0,0) scale(1); }
+            33% { transform: translate(60px,-40px) scale(1.1); }
+            66% { transform: translate(-40px,50px) scale(0.95); }
+        }
+
+        /* Grid overlay */
+        .grid-overlay {
+            position: fixed;
+            inset: 0;
+            z-index: -1;
+            background-image:
+                linear-gradient(rgba(59,130,246,.04) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(59,130,246,.04) 1px, transparent 1px);
+            background-size: 60px 60px;
+            mask-image: radial-gradient(ellipse at center, black 40%, transparent 80%);
+            pointer-events: none;
+        }
+
+        /* Gradient text */
+        .gradient-text {
+            background: linear-gradient(120deg, #60a5fa, #a78bfa, #22d3ee, #60a5fa);
+            background-size: 300% 300%;
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+            animation: gradientX 8s ease infinite;
+        }
+
+        /* Scroll reveal */
+        .reveal {
+            opacity: 0;
+            transform: translateY(40px);
+            transition: opacity .9s cubic-bezier(.16,1,.3,1), transform .9s cubic-bezier(.16,1,.3,1);
+        }
+        .reveal.visible { opacity: 1; transform: translateY(0); }
+        .reveal.d1 { transition-delay: .1s; }
+        .reveal.d2 { transition-delay: .2s; }
+        .reveal.d3 { transition-delay: .3s; }
+        .reveal.d4 { transition-delay: .4s; }
+
+        /* Card hover */
+        .feature-card {
+            transition: all .4s cubic-bezier(.16,1,.3,1);
+            position: relative;
+            overflow: hidden;
+        }
+        .feature-card::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(135deg, rgba(59,130,246,.12), rgba(167,139,250,.08));
+            opacity: 0;
+            transition: opacity .4s ease;
+            pointer-events: none;
+        }
+        .feature-card:hover {
+            transform: translateY(-8px);
+            border-color: rgba(96,165,250,.4);
+            box-shadow: 0 20px 60px -15px rgba(59,130,246,.4);
+        }
+        .feature-card:hover::before { opacity: 1; }
+        .feature-card:hover .feature-icon {
+            transform: scale(1.15) rotate(-5deg);
+            background: rgba(96,165,250,.2);
+            box-shadow: 0 0 30px rgba(96,165,250,.4);
+        }
+        .feature-icon {
+            transition: all .4s cubic-bezier(.16,1,.3,1);
+        }
+
+        /* Buttons */
+        .btn-primary {
+            position: relative;
+            overflow: hidden;
+            transition: all .3s ease;
+        }
+        .btn-primary::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,.25), transparent);
+            transform: translateX(-100%);
+            transition: transform .7s ease;
+        }
+        .btn-primary:hover::after { transform: translateX(100%); }
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 15px 40px -10px rgba(59,130,246,.6);
+        }
+
+        /* Nav link hover */
+        .nav-link { position: relative; }
+        .nav-link::after {
+            content: '';
+            position: absolute;
+            bottom: -4px;
+            left: 0;
+            width: 0;
+            height: 2px;
+            background: linear-gradient(90deg, #60a5fa, #a78bfa);
+            transition: width .3s ease;
+            border-radius: 2px;
+        }
+        .nav-link:hover::after { width: 100%; }
+
+        /* Terminal */
+        .terminal {
+            box-shadow: 0 30px 80px -20px rgba(37,99,235,.5), 0 0 0 1px rgba(59,130,246,.1);
+        }
+        .terminal-line {
+            opacity: 0;
+            animation: fadeInLine .5s ease forwards;
+        }
+        @keyframes fadeInLine {
+            to { opacity: 1; }
+        }
+        .cursor-blink::after {
+            content: '▊';
+            color: #60a5fa;
+            animation: blink 1s step-end infinite;
+        }
+
+        /* Logo glow */
+        .logo-glow {
+            filter: drop-shadow(0 0 20px rgba(96,165,250,.5));
+            transition: filter .4s ease, transform .4s ease;
+        }
+        .logo-glow:hover {
+            filter: drop-shadow(0 0 40px rgba(96,165,250,.9));
+            transform: scale(1.05);
+        }
+
+        /* Section badge */
+        .section-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: .5rem;
+            padding: .4rem .9rem;
+            font-size: .75rem;
+            font-weight: 600;
+            letter-spacing: .05em;
+            text-transform: uppercase;
+            border-radius: 999px;
+            background: rgba(59,130,246,.08);
+            border: 1px solid rgba(59,130,246,.2);
+            color: #93c5fd;
+        }
+
+        /* Crypto pill */
+        .crypto-pill {
+            transition: all .3s ease;
+        }
+        .crypto-pill:hover {
+            background: rgba(96,165,250,.15);
+            border-color: rgba(96,165,250,.5);
+            transform: translateY(-2px);
+        }
+
+        /* Marquee */
+        .marquee {
+            display: flex;
+            gap: 3rem;
+            animation: marquee 30s linear infinite;
+            width: max-content;
+        }
+        @keyframes marquee {
+            from { transform: translateX(0); }
+            to { transform: translateX(-50%); }
+        }
+
+        /* Command chip */
+        .cmd-chip {
+            transition: all .25s ease;
+            cursor: default;
+        }
+        .cmd-chip:hover {
+            background: rgba(96,165,250,.15);
+            color: #dbeafe;
+            border-color: rgba(96,165,250,.5);
+            transform: translateY(-2px);
+        }
+
+        /* Float animation for hero decoration */
+        @keyframes floatY {
+            0%,100% { transform: translateY(0) }
+            50% { transform: translateY(-14px) }
+        }
+        .float-y { animation: floatY 5s ease-in-out infinite; }
+
+        /* Custom scrollbar */
+        ::-webkit-scrollbar { width: 10px; }
+        ::-webkit-scrollbar-track { background: #020617; }
+        ::-webkit-scrollbar-thumb { background: #1e293b; border-radius: 5px; }
+        ::-webkit-scrollbar-thumb:hover { background: #334155; }
+
+        /* Selection */
+        ::selection { background: rgba(96,165,250,.3); color: #fff; }
+
+        /* Feature icon container */
+        .icon-box {
+            width: 56px; height: 56px;
+            display: flex; align-items: center; justify-content: center;
+            border-radius: 14px;
+            background: rgba(59,130,246,.1);
+            border: 1px solid rgba(59,130,246,.2);
+        }
+
+        /* Code highlight */
+        .code-key { color: #c084fc; }
+        .code-val { color: #60a5fa; }
+        .code-str { color: #34d399; }
+        .code-comment { color: #475569; }
+
+        /* Smooth border gradient on stat cards */
+        .stat-card {
+            position: relative;
+            background: rgba(15,23,42,.6);
+            border: 1px solid rgba(51,65,85,.6);
+            border-radius: 16px;
+            transition: all .4s ease;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-width: 0;
+        }
+        .stat-card::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0;
+            height: 2px;
+            background: linear-gradient(90deg, transparent, #60a5fa, #a78bfa, transparent);
+            transform: scaleX(0);
+            transition: transform .5s ease;
+        }
+        .stat-card:hover {
+            border-color: rgba(96,165,250,.3);
+            transform: translateY(-4px);
+        }
+        .stat-card:hover::before { transform: scaleX(1); }
+        .stat-value {
+            white-space: nowrap;
+            line-height: 1.1;
+            letter-spacing: -0.02em;
+        }
+        .stat-label {
+            line-height: 1.15;
+            text-align: center;
+            word-break: break-word;
+        }
     </style>
 </head>
-<body class="bg-slate-950 text-slate-100 antialiased selection:bg-brand-500 selection:text-white">
+<body class="text-slate-100 antialiased">
 
-    <header class="sticky top-0 z-50 backdrop-blur-md bg-slate-950/80 border-b border-slate-800">
+    <!-- Animated background -->
+    <div class="mesh-bg">
+        <div class="mesh-blob blob-1"></div>
+        <div class="mesh-blob blob-2"></div>
+        <div class="mesh-blob blob-3"></div>
+    </div>
+    <div class="grid-overlay"></div>
+
+    <!-- ============ HEADER ============ -->
+    <header class="sticky top-0 z-50 backdrop-blur-xl bg-slate-950/70 border-b border-slate-800/80">
         <div class="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
-            <div class="flex items-center gap-3">
-                <img src="LANMess.png" alt="LANMess Logo" class="w-8 h-8 rounded-lg object-contain bg-slate-900 p-1 border border-slate-800">
-                <span class="font-bold text-lg tracking-tight">LANMess</span>
-                <span class="text-xs bg-brand-500/10 text-brand-400 border border-brand-500/20 px-2 py-0.5 rounded-full font-mono">v1.1.10</span>
-            </div>
-            <nav class="hidden md:flex items-center gap-6 text-sm text-slate-400">
-                <a href="#features" class="hover:text-white transition">Features</a>
-                <a href="#security" class="hover:text-white transition">Security</a>
-                <a href="#install" class="hover:text-white transition">Installation</a>
+            <a href="#" class="flex items-center gap-3 group">
+                <div class="logo-glow">
+                    <img src="LANMess.png" alt="LANMess Logo" class="w-9 h-9 rounded-lg object-contain bg-slate-900 p-1 border border-slate-800">
+                </div>
+                <span class="font-bold text-lg tracking-tight group-hover:text-brand-300 transition-colors">LANMess</span>
+                <span class="text-[10px] bg-brand-500/10 text-brand-300 border border-brand-500/25 px-2 py-0.5 rounded-full font-mono font-medium">v1.1.10</span>
+            </a>
+            <nav class="hidden md:flex items-center gap-8 text-sm text-slate-400">
+                <a href="#features" class="nav-link hover:text-white transition-colors">Features</a>
+                <a href="#security" class="nav-link hover:text-white transition-colors">Security</a>
+                <a href="#commands" class="nav-link hover:text-white transition-colors">Commands</a>
+                <a href="#install" class="nav-link hover:text-white transition-colors">Install</a>
             </nav>
             <div class="flex items-center gap-3">
-                <a href="https://github.com/virensahti-nl/lanmess/releases/latest" target="_blank" class="hidden sm:inline-flex items-center gap-2 bg-brand-600 hover:bg-brand-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition shadow-lg shadow-brand-600/20">
-                    Latest Release
+                <a href="https://github.com/virensahti-nl/lanmess/releases/latest" target="_blank" rel="noopener" class="btn-primary hidden sm:inline-flex items-center gap-2 bg-brand-600 hover:bg-brand-500 text-white px-4 py-2 rounded-lg text-sm font-semibold shadow-lg shadow-brand-600/25">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+                    Download
                 </a>
-                <a href="https://github.com/virensahti-nl/lanmess" target="_blank" class="inline-flex items-center gap-2 bg-slate-900 hover:bg-slate-800 border border-slate-700 px-4 py-2 rounded-lg text-sm font-medium transition">
+                <a href="https://github.com/virensahti-nl/lanmess" target="_blank" rel="noopener" class="inline-flex items-center gap-2 bg-slate-900/80 hover:bg-slate-800 border border-slate-700/80 hover:border-slate-600 px-3 py-2 rounded-lg text-sm font-medium transition-all duration-300 hover:-translate-y-0.5">
+                    <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M12 .3a12 12 0 0 0-3.8 23.4c.6.1.8-.3.8-.6v-2.2c-3.3.7-4-1.6-4-1.6-.6-1.4-1.4-1.8-1.4-1.8-1-.7.1-.7.1-.7 1.2.1 1.8 1.2 1.8 1.2 1 1.8 2.8 1.3 3.4 1 .1-.7.4-1.3.8-1.6-2.7-.3-5.5-1.3-5.5-6 0-1.3.5-2.3 1.2-3.2-.1-.3-.5-1.5.1-3.2 0 0 1-.3 3.3 1.2a11.5 11.5 0 0 1 6 0c2.3-1.5 3.3-1.2 3.3-1.2.7 1.7.3 2.9.1 3.2.8.8 1.2 1.9 1.2 3.2 0 4.6-2.8 5.6-5.5 6 .4.4.8 1.1.8 2.2v3.3c0 .3.2.7.8.6A12 12 0 0 0 12 .3"/></svg>
                     GitHub
                 </a>
             </div>
         </div>
     </header>
 
-    <section class="relative pt-20 pb-24 overflow-hidden border-b border-slate-900">
-        <div class="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-brand-900/20 via-slate-950/0 to-slate-950/0 pointer-events-none"></div>
-        <div class="max-w-5xl mx-auto px-6 text-center relative z-10">
-            
-            <div class="mb-8 flex justify-center">
-                <div class="p-4 bg-slate-900/60 border border-slate-800 rounded-2xl shadow-2xl backdrop-blur">
-                    <img src="LANMess.png" alt="LANMess Logo" class="h-20 w-auto object-contain">
+    <!-- ============ HERO ============ -->
+    <section class="relative pt-16 pb-24 md:pt-24 md:pb-32 overflow-hidden">
+        <div class="max-w-7xl mx-auto px-6">
+            <div class="grid lg:grid-cols-2 gap-16 items-center">
+
+                <!-- Left: copy -->
+                <div class="reveal">
+                    <div class="section-badge mb-6">
+                        <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+                        No cloud · No internet · Zero trust
+                    </div>
+                    <h1 class="text-4xl md:text-5xl lg:text-6xl font-extrabold tracking-tight leading-[1.05] mb-6">
+                        Encrypted messaging,<br>
+                        <span class="gradient-text">right on your LAN.</span>
+                    </h1>
+                    <p class="text-lg text-slate-400 leading-relaxed mb-8 max-w-xl">
+                        A terminal-native, end-to-end encrypted messenger that lives entirely
+                        on your local network. Powered by X25519, AES-GCM and Ed25519 —
+                        with a slick TUI, live presence and no external server in sight.
+                    </p>
+                    <div class="flex flex-col sm:flex-row gap-4">
+                        <a href="https://github.com/virensahti-nl/lanmess/releases/latest" target="_blank" rel="noopener" class="btn-primary inline-flex items-center justify-center gap-2 bg-brand-600 hover:bg-brand-500 text-white font-semibold px-7 py-3.5 rounded-xl shadow-xl shadow-brand-600/30">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+                            Get Latest Release
+                        </a>
+                        <a href="#install" class="inline-flex items-center justify-center gap-2 bg-slate-900/60 hover:bg-slate-800/80 border border-slate-700/80 hover:border-slate-600 text-slate-200 font-semibold px-7 py-3.5 rounded-xl transition-all duration-300 hover:-translate-y-0.5">
+                            <svg class="w-5 h-5 text-emerald-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M8 9l3 3-3 3m5 0h3M5 20h14a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+                            pip install lanmess
+                        </a>
+                    </div>
+
+                    <!-- quick stats -->
+                    <div class="mt-10 grid grid-cols-3 gap-3 sm:gap-4 w-full max-w-md">
+                        <div class="stat-card px-2 py-3 sm:px-3 sm:py-4">
+                            <div class="stat-value text-lg sm:text-xl md:text-2xl font-bold text-brand-300 mono">600k</div>
+                            <div class="stat-label text-[10px] sm:text-xs text-slate-500 mt-1.5">PBKDF2<br class="sm:hidden"> iterations</div>
+                        </div>
+                        <div class="stat-card px-2 py-3 sm:px-3 sm:py-4">
+                            <div class="stat-value text-base sm:text-lg md:text-2xl font-bold text-violet-300 mono">X25519</div>
+                            <div class="stat-label text-[10px] sm:text-xs text-slate-500 mt-1.5">key<br class="sm:hidden"> exchange</div>
+                        </div>
+                        <div class="stat-card px-2 py-3 sm:px-3 sm:py-4">
+                            <div class="stat-value text-lg sm:text-xl md:text-2xl font-bold text-emerald-300 mono">0</div>
+                            <div class="stat-label text-[10px] sm:text-xs text-slate-500 mt-1.5">cloud<br class="sm:hidden"> deps</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Right: terminal mockup -->
+                <div class="reveal d2">
+                    <div class="relative">
+                        <!-- Glow behind -->
+                        <div class="absolute -inset-4 bg-gradient-to-r from-brand-500/20 via-violet-500/20 to-cyan-500/20 rounded-3xl blur-3xl"></div>
+
+                        <div class="terminal relative bg-slate-950 border border-slate-800 rounded-2xl overflow-hidden">
+                            <!-- Title bar -->
+                            <div class="bg-slate-900/80 px-4 py-3 border-b border-slate-800 flex items-center gap-2">
+                                <div class="w-3 h-3 rounded-full bg-red-500/80"></div>
+                                <div class="w-3 h-3 rounded-full bg-yellow-500/80"></div>
+                                <div class="w-3 h-3 rounded-full bg-green-500/80"></div>
+                                <span class="text-xs text-slate-500 font-mono ml-3">lanmess — ~/LAN</span>
+                            </div>
+                            <!-- Body -->
+                            <div class="p-5 font-mono text-[12px] md:text-sm leading-relaxed space-y-1.5 min-h-[340px]">
+                                <p class="text-slate-500 terminal-line" style="animation-delay:.1s">$ pip install lanmess</p>
+                                <p class="text-slate-500 terminal-line" style="animation-delay:.4s">$ lanmess</p>
+                                <p class="text-emerald-400 terminal-line" style="animation-delay:.8s">✓ Vault unlocked (Argon2id)</p>
+                                <p class="text-slate-400 terminal-line" style="animation-delay:1.1s">→ UDP discovery on <span class="text-brand-400">:50505</span></p>
+                                <p class="text-slate-400 terminal-line" style="animation-delay:1.4s">→ TCP listener on <span class="text-brand-400">:50510</span></p>
+                                <p class="text-brand-400 terminal-line" style="animation-delay:1.7s">● 2 peers discovered on LAN</p>
+                                <p class="text-slate-500 mt-3 terminal-line" style="animation-delay:2.1s">┌─ Contacts ─────────────────┐</p>
+                                <p class="text-slate-300 terminal-line" style="animation-delay:2.3s">│ <span class="text-emerald-400">●</span> alice <span class="text-brand-400">*</span>  (active)       │</p>
+                                <p class="text-slate-300 terminal-line" style="animation-delay:2.5s">│ <span class="text-emerald-400">●</span> bob                    │</p>
+                                <p class="text-slate-300 terminal-line" style="animation-delay:2.7s">│ <span class="text-yellow-400">○</span> carol  [waiting]         │</p>
+                                <p class="text-slate-500 terminal-line" style="animation-delay:2.9s">└──────────────────────────────┘</p>
+                                <p class="text-slate-400 terminal-line mt-2" style="animation-delay:3.2s"><span class="text-brand-400">alice ▸</span> hey — safety number matches ✓</p>
+                                <p class="text-slate-500 terminal-line cursor-blink" style="animation-delay:3.6s"><span class="text-brand-400">you ▸</span> </p>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
-
-            <h1 class="text-4xl md:text-6xl font-extrabold tracking-tight mb-6">
-                Secure Encrypted Messaging for your <span class="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-brand-600">Local Network</span>
-            </h1>
-            <p class="text-lg md:text-xl text-slate-400 max-w-2xl mx-auto mb-10">
-                A LAN-only, end-to-end encrypted messenger featuring a powerful Terminal User Interface (TUI). No internet, external servers, or cloud required.
-            </p>
-            
-            <div class="flex flex-col sm:flex-row justify-center gap-4 mb-16">
-                <a href="https://github.com/virensahti-nl/lanmess/releases/latest" target="_blank" class="bg-brand-600 hover:bg-brand-700 text-white font-semibold px-8 py-3.5 rounded-xl shadow-lg shadow-brand-600/20 transition flex items-center justify-center gap-2">
-                    Download Newest Release
-                </a>
-                <a href="#install" class="bg-slate-900 hover:bg-slate-800 text-slate-300 font-semibold px-8 py-3.5 rounded-xl border border-slate-800 transition">
-                    Install via Pip
-                </a>
-            </div>
-
-            <div class="text-left bg-slate-900 border border-slate-800 rounded-2xl shadow-2xl overflow-hidden max-w-3xl mx-auto">
-                <div class="bg-slate-950 px-4 py-3 border-b border-slate-800 flex items-center gap-2">
-                    <div class="w-3 h-3 rounded-full bg-red-500/80"></div>
-                    <div class="w-3 h-3 rounded-full bg-yellow-500/80"></div>
-                    <div class="w-3 h-3 rounded-full bg-green-500/80"></div>
-                    <span class="text-xs text-slate-500 font-mono ml-2">terminal — lanmess</span>
-                </div>
-                <div class="p-6 font-mono text-xs md:text-sm text-slate-300 space-y-2">
-                    <p class="text-slate-500">$ pip install lanmess</p>
-                    <p><span class="text-brand-400">$</span> lanmess</p>
-                    <p class="text-emerald-400">✓ Vault unlocked via Argon2id.</p>
-                    <p class="text-slate-400">→ Discovery started on port 50505 (UDP).</p>
-                    <p class="text-brand-500">→ Connected with peers on local network.</p>
-                </div>
-            </div>
-
         </div>
     </section>
 
-    <section id="features" class="py-24 max-w-7xl mx-auto px-6">
-        <div class="text-center max-w-2xl mx-auto mb-16">
-            <h2 class="text-3xl font-bold tracking-tight mb-4">Powerful Features, Maximum Privacy</h2>
-            <p class="text-slate-400">Designed for direct, zero-trust communication across your trusted subnets.</p>
+    <!-- ============ MARQUEE STRIP ============ -->
+    <div class="border-y border-slate-900/80 bg-slate-950/60 py-5 overflow-hidden">
+        <div class="marquee text-slate-500 text-sm">
+            <div class="flex gap-12 items-center whitespace-nowrap">
+                <span class="mono">X25519</span><span class="text-brand-500/40">◆</span>
+                <span class="mono">AES-GCM</span><span class="text-brand-500/40">◆</span>
+                <span class="mono">Ed25519</span><span class="text-brand-500/40">◆</span>
+                <span class="mono">Argon2id</span><span class="text-brand-500/40">◆</span>
+                <span class="mono">Hash Ratchet</span><span class="text-brand-500/40">◆</span>
+                <span class="mono">HMAC Chains</span><span class="text-brand-500/40">◆</span>
+                <span class="mono">Safety Numbers</span><span class="text-brand-500/40">◆</span>
+                <span class="mono">TOTP</span><span class="text-brand-500/40">◆</span>
+                <span class="mono">UDP Discovery</span><span class="text-brand-500/40">◆</span>
+                <span class="mono">Padding 256B</span><span class="text-brand-500/40">◆</span>
+            </div>
+            <div class="flex gap-12 items-center whitespace-nowrap" aria-hidden="true">
+                <span class="mono">X25519</span><span class="text-brand-500/40">◆</span>
+                <span class="mono">AES-GCM</span><span class="text-brand-500/40">◆</span>
+                <span class="mono">Ed25519</span><span class="text-brand-500/40">◆</span>
+                <span class="mono">Argon2id</span><span class="text-brand-500/40">◆</span>
+                <span class="mono">Hash Ratchet</span><span class="text-brand-500/40">◆</span>
+                <span class="mono">HMAC Chains</span><span class="text-brand-500/40">◆</span>
+                <span class="mono">Safety Numbers</span><span class="text-brand-500/40">◆</span>
+                <span class="mono">TOTP</span><span class="text-brand-500/40">◆</span>
+                <span class="mono">UDP Discovery</span><span class="text-brand-500/40">◆</span>
+                <span class="mono">Padding 256B</span><span class="text-brand-500/40">◆</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- ============ FEATURES ============ -->
+    <section id="features" class="py-24 md:py-32 max-w-7xl mx-auto px-6">
+        <div class="text-center max-w-2xl mx-auto mb-16 reveal">
+            <div class="section-badge mb-4">Features</div>
+            <h2 class="text-3xl md:text-4xl font-bold tracking-tight mb-4">
+                Built for people who take <span class="text-brand-400">privacy</span> seriously.
+            </h2>
+            <p class="text-slate-400 leading-relaxed">
+                Every packet on the wire is authenticated, padded, and ratcheted.
+                No telemetry. No phone home. Just peers on your subnet.
+            </p>
         </div>
 
-        <div class="grid md:grid-cols-3 gap-8">
-            <div class="bg-slate-900/50 border border-slate-800/80 p-8 rounded-2xl hover:border-slate-700 transition">
-                <div class="w-12 h-12 bg-brand-500/10 text-brand-400 rounded-xl flex items-center justify-center font-bold text-xl mb-6">🔒</div>
-                <h3 class="text-xl font-semibold mb-3">End-to-End Encryption</h3>
+        <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <!-- Card 1 -->
+            <div class="feature-card reveal bg-slate-900/40 border border-slate-800/80 rounded-2xl p-7">
+                <div class="feature-icon icon-box mb-5">
+                    <svg class="w-7 h-7 text-brand-400" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
+                </div>
+                <h3 class="text-xl font-semibold mb-3">End-to-End Encrypted</h3>
                 <p class="text-slate-400 text-sm leading-relaxed">
-                    Powered by X25519 key exchange, AES-GCM encryption, and hash ratchets. Every frame is authenticated with Ed25519 signatures.
+                    X25519 ephemeral key exchange with per-session hash ratchets.
+                    Every message gets a fresh AES-GCM key. 256-byte padding on every payload.
                 </p>
             </div>
-            <div class="bg-slate-900/50 border border-slate-800/80 p-8 rounded-2xl hover:border-slate-700 transition">
-                <div class="w-12 h-12 bg-brand-500/10 text-brand-400 rounded-xl flex items-center justify-center font-bold text-xl mb-6">⚡</div>
+
+            <!-- Card 2 -->
+            <div class="feature-card reveal d1 bg-slate-900/40 border border-slate-800/80 rounded-2xl p-7">
+                <div class="feature-icon icon-box mb-5">
+                    <svg class="w-7 h-7 text-brand-400" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M8.111 16.404a5.5 5.5 0 017.778 0M12 20h.01m-7.08-7.071c3.904-3.905 10.236-3.905 14.141 0M1.394 9.393c5.857-5.857 15.355-5.857 21.213 0"/></svg>
+                </div>
                 <h3 class="text-xl font-semibold mb-3">Automatic Peer Discovery</h3>
                 <p class="text-slate-400 text-sm leading-relaxed">
-                    Zero configuration needed. Discover active peers instantly via UDP broadcast packets inside your local area network.
+                    Zero-config UDP broadcast discovery on port 50505. Peers appear
+                    automatically on your LAN, or add them by IP and TOTP code.
                 </p>
             </div>
-            <div class="bg-slate-900/50 border border-slate-800/80 p-8 rounded-2xl hover:border-slate-700 transition">
-                <div class="w-12 h-12 bg-brand-500/10 text-brand-400 rounded-xl flex items-center justify-center font-bold text-xl mb-6">💻</div>
-                <h3 class="text-xl font-semibold mb-3">Sleek TUI Interface</h3>
+
+            <!-- Card 3 -->
+            <div class="feature-card reveal d2 bg-slate-900/40 border border-slate-800/80 rounded-2xl p-7">
+                <div class="feature-icon icon-box mb-5">
+                    <svg class="w-7 h-7 text-brand-400" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M8 9l3 3-3 3m5 0h3M5 20h14a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+                </div>
+                <h3 class="text-xl font-semibold mb-3">Beautiful TUI</h3>
                 <p class="text-slate-400 text-sm leading-relaxed">
-                    Lightning-fast Terminal User Interface built with Textual, featuring live presence monitoring, typing indicators, and desktop notifications.
+                    A blazing-fast Terminal UI built on Textual. Live presence dots,
+                    typing indicators, notifications, message search, and full keyboard control.
+                </p>
+            </div>
+
+            <!-- Card 4 -->
+            <div class="feature-card reveal bg-slate-900/40 border border-slate-800/80 rounded-2xl p-7">
+                <div class="feature-icon icon-box mb-5">
+                    <svg class="w-7 h-7 text-brand-400" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
+                </div>
+                <h3 class="text-xl font-semibold mb-3">Identity Verification</h3>
+                <p class="text-slate-400 text-sm leading-relaxed">
+                    Fingerprint-based safety numbers let you verify contacts out-of-band.
+                    Mark contacts verified and enforce verified-only mode across the app.
+                </p>
+            </div>
+
+            <!-- Card 5 -->
+            <div class="feature-card reveal d1 bg-slate-900/40 border border-slate-800/80 rounded-2xl p-7">
+                <div class="feature-icon icon-box mb-5">
+                    <svg class="w-7 h-7 text-brand-400" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                </div>
+                <h3 class="text-xl font-semibold mb-3">Tamper-Evident Audit Log</h3>
+                <p class="text-slate-400 text-sm leading-relaxed">
+                    Every security event is appended to an HMAC-chained log with a
+                    genesis anchor. Silent tampering becomes mathematically detectable.
+                </p>
+            </div>
+
+            <!-- Card 6 -->
+            <div class="feature-card reveal d2 bg-slate-900/40 border border-slate-800/80 rounded-2xl p-7">
+                <div class="feature-icon icon-box mb-5">
+                    <svg class="w-7 h-7 text-brand-400" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                </div>
+                <h3 class="text-xl font-semibold mb-3">PIN Lockout & Vault</h3>
+                <p class="text-slate-400 text-sm leading-relaxed">
+                    Master key wrapped with Argon2id(PIN). Escalating lockouts after
+                    5, 10, 20, 50 failures — up to a full day. No cloud recovery, by design.
                 </p>
             </div>
         </div>
     </section>
 
-    <section id="security" class="py-20 bg-slate-900/30 border-y border-slate-900">
-        <div class="max-w-5xl mx-auto px-6 grid md:grid-cols-2 gap-12 items-center">
-            <div>
-                <h2 class="text-3xl font-bold tracking-tight mb-6">Robust Local Security Architecture</h2>
-                <ul class="space-y-4 text-slate-300 text-sm">
-                    <li class="flex items-start gap-3">
-                        <span class="text-emerald-400 font-bold">✓</span>
-                        <span><strong>Argon2id Vault:</strong> Local databases and master keys are strongly encrypted and protected behind a secure PIN code.</span>
-                    </li>
-                    <li class="flex items-start gap-3">
-                        <span class="text-emerald-400 font-bold">✓</span>
-                        <span><strong>HMAC Audit Logs:</strong> Security events and actions are cryptographically chained to maintain tamper evidence.</span>
-                    </li>
-                    <li class="flex items-start gap-3">
-                        <span class="text-emerald-400 font-bold">✓</span>
-                        <span><strong>Safety Numbers:</strong> Manually compare safety fingerprints to prevent man-in-the-middle attacks.</span>
-                    </li>
-                </ul>
-            </div>
-            <div class="bg-slate-950 border border-slate-800 p-6 rounded-2xl font-mono text-xs text-slate-400 space-y-3">
-                <p class="text-slate-500"># configuration parameters</p>
-                <p><span class="text-purple-400">PBKDF2_ITERATIONS</span> = 600_000</p>
-                <p><span class="text-purple-400">ARGON2_TIME_COST</span> = 3</p>
-                <p><span class="text-purple-400">ARGON2_MEMORY_COST</span> = 64 * 1024</p>
-                <p><span class="text-purple-400">PIN_LOCKOUT_STEPS</span> = ((5, 30), (10, 300), ...)</p>
-                <p class="text-emerald-400"># Zero cloud dependency.</p>
+    <!-- ============ SECURITY ============ -->
+    <section id="security" class="py-24 md:py-32 bg-slate-950/50 border-y border-slate-900/80">
+        <div class="max-w-7xl mx-auto px-6">
+            <div class="grid lg:grid-cols-2 gap-16 items-center">
+
+                <div class="reveal">
+                    <div class="section-badge mb-4">Security</div>
+                    <h2 class="text-3xl md:text-4xl font-bold tracking-tight mb-6">
+                        Every layer auditable.<br>
+                        <span class="text-brand-400">Every byte defended.</span>
+                    </h2>
+                    <p class="text-slate-400 leading-relaxed mb-8">
+                        LANMess is built from primitives you can inspect. There is
+                        no black box, no remote relay, and no hidden telemetry channel.
+                    </p>
+                    <ul class="space-y-4 text-slate-300 text-sm">
+                        <li class="flex items-start gap-3 group">
+                            <span class="mt-0.5 flex-shrink-0 w-5 h-5 rounded-full bg-emerald-500/15 border border-emerald-500/30 flex items-center justify-center">
+                                <svg class="w-3 h-3 text-emerald-400" fill="none" stroke="currentColor" stroke-width="3" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
+                            </span>
+                            <span><strong class="text-white">Argon2id Vault:</strong> 64 MB memory, 3 passes, 4 lanes. Your PIN never leaves the device.</span>
+                        </li>
+                        <li class="flex items-start gap-3">
+                            <span class="mt-0.5 flex-shrink-0 w-5 h-5 rounded-full bg-emerald-500/15 border border-emerald-500/30 flex items-center justify-center">
+                                <svg class="w-3 h-3 text-emerald-400" fill="none" stroke="currentColor" stroke-width="3" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
+                            </span>
+                            <span><strong class="text-white">Ed25519 signatures</strong> on every frame, including control traffic — not just messages.</span>
+                        </li>
+                        <li class="flex items-start gap-3">
+                            <span class="mt-0.5 flex-shrink-0 w-5 h-5 rounded-full bg-emerald-500/15 border border-emerald-500/30 flex items-center justify-center">
+                                <svg class="w-3 h-3 text-emerald-400" fill="none" stroke="currentColor" stroke-width="3" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
+                            </span>
+                            <span><strong class="text-white">Replay protection:</strong> 60-second time window + monotonic per-chain counters.</span>
+                        </li>
+                        <li class="flex items-start gap-3">
+                            <span class="mt-0.5 flex-shrink-0 w-5 h-5 rounded-full bg-emerald-500/15 border border-emerald-500/30 flex items-center justify-center">
+                                <svg class="w-3 h-3 text-emerald-400" fill="none" stroke="currentColor" stroke-width="3" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
+                            </span>
+                            <span><strong class="text-white">Secure delete</strong> PRAGMA + zeroed key buffers on lock / shutdown.</span>
+                        </li>
+                    </ul>
+
+                    <div class="mt-8 flex flex-wrap gap-2">
+                        <span class="crypto-pill px-3 py-1.5 text-xs mono bg-slate-900 border border-slate-800 rounded-lg text-slate-400">HKDF-SHA256</span>
+                        <span class="crypto-pill px-3 py-1.5 text-xs mono bg-slate-900 border border-slate-800 rounded-lg text-slate-400">HMAC-SHA256</span>
+                        <span class="crypto-pill px-3 py-1.5 text-xs mono bg-slate-900 border border-slate-800 rounded-lg text-slate-400">TOTP-8</span>
+                        <span class="crypto-pill px-3 py-1.5 text-xs mono bg-slate-900 border border-slate-800 rounded-lg text-slate-400">constant-time compare</span>
+                    </div>
+                </div>
+
+                <div class="reveal d2">
+                    <div class="relative">
+                        <div class="absolute -inset-4 bg-gradient-to-r from-violet-500/10 via-brand-500/10 to-cyan-500/10 rounded-3xl blur-2xl"></div>
+                        <div class="relative bg-slate-950 border border-slate-800 rounded-2xl overflow-hidden">
+                            <div class="bg-slate-900/80 px-4 py-3 border-b border-slate-800 flex items-center justify-between">
+                                <span class="text-xs text-slate-500 font-mono">config.py</span>
+                                <span class="text-[10px] mono text-brand-400 px-2 py-0.5 rounded bg-brand-500/10 border border-brand-500/20">hardened defaults</span>
+                            </div>
+                            <pre class="p-5 text-xs md:text-[13px] leading-relaxed overflow-x-auto"><code><span class="code-comment"># crypto primitives</span>
+<span class="code-key">PBKDF2_ITERATIONS</span>  = <span class="code-val">600_000</span>
+<span class="code-key">ARGON2_TIME_COST</span>   = <span class="code-val">3</span>
+<span class="code-key">ARGON2_MEMORY_COST</span> = <span class="code-val">64 * 1024</span>
+<span class="code-key">ARGON2_PARALLELISM</span> = <span class="code-val">4</span>
+
+<span class="code-comment"># traffic hygiene</span>
+<span class="code-key">PAD_BLOCK</span>          = <span class="code-val">256</span>
+<span class="code-key">MAX_FRAME_SIZE</span>     = <span class="code-val">64 * 1024</span>
+<span class="code-key">REPLAY_WINDOW</span>      = <span class="code-val">60</span>  <span class="code-comment"># seconds</span>
+
+<span class="code-comment"># lockout schedule</span>
+<span class="code-key">PIN_LOCKOUT_STEPS</span> = (
+  (<span class="code-val">5</span>,  <span class="code-val">30</span>),
+  (<span class="code-val">10</span>, <span class="code-val">300</span>),
+  (<span class="code-val">20</span>, <span class="code-val">3600</span>),
+  (<span class="code-val">50</span>, <span class="code-val">86400</span>),
+)
+
+<span class="code-str"># zero cloud dependencies.</span>
+<span class="code-str"># zero outbound traffic.</span>
+</code></pre>
+                        </div>
+                    </div>
+                </div>
+
             </div>
         </div>
     </section>
 
-    <section id="install" class="py-24 max-w-4xl mx-auto px-6 text-center">
-        <h2 class="text-3xl font-bold tracking-tight mb-4">Quick Installation</h2>
-        <p class="text-slate-400 mb-8">Get started instantly via Python Package Index (PyPI).</p>
+    <!-- ============ COMMANDS ============ -->
+    <section id="commands" class="py-24 md:py-32 max-w-7xl mx-auto px-6">
+        <div class="text-center max-w-2xl mx-auto mb-16 reveal">
+            <div class="section-badge mb-4">TUI Reference</div>
+            <h2 class="text-3xl md:text-4xl font-bold tracking-tight mb-4">
+                Every action, <span class="text-brand-400">one keystroke away.</span>
+            </h2>
+            <p class="text-slate-400 leading-relaxed">
+                Slash commands for power users, hotkeys for speed.
+            </p>
+        </div>
 
-        <div class="bg-slate-900 border border-slate-800 rounded-xl p-4 text-left max-w-xl mx-auto font-mono text-sm flex items-center justify-between shadow-lg">
-            <span class="text-emerald-400">$ pip install lanmess</span>
-            <span class="text-xs text-slate-500">Python &gt;= 3.9</span>
+        <div class="grid md:grid-cols-2 gap-6">
+            <div class="reveal bg-slate-900/40 border border-slate-800/80 rounded-2xl p-6">
+                <h3 class="text-sm font-semibold text-slate-300 mb-4 flex items-center gap-2">
+                    <span class="w-1.5 h-1.5 rounded-full bg-brand-400"></span>
+                    Slash commands
+                </h3>
+                <div class="grid grid-cols-2 gap-2">
+                    <div class="cmd-chip px-3 py-2 rounded-lg bg-slate-950/60 border border-slate-800/80 mono text-[12px] text-slate-400"><span class="text-brand-400">/help</span></div>
+                    <div class="cmd-chip px-3 py-2 rounded-lg bg-slate-950/60 border border-slate-800/80 mono text-[12px] text-slate-400"><span class="text-brand-400">/menu</span></div>
+                    <div class="cmd-chip px-3 py-2 rounded-lg bg-slate-950/60 border border-slate-800/80 mono text-[12px] text-slate-400"><span class="text-brand-400">/addip</span></div>
+                    <div class="cmd-chip px-3 py-2 rounded-lg bg-slate-950/60 border border-slate-800/80 mono text-[12px] text-slate-400"><span class="text-brand-400">/address</span></div>
+                    <div class="cmd-chip px-3 py-2 rounded-lg bg-slate-950/60 border border-slate-800/80 mono text-[12px] text-slate-400"><span class="text-brand-400">/code</span></div>
+                    <div class="cmd-chip px-3 py-2 rounded-lg bg-slate-950/60 border border-slate-800/80 mono text-[12px] text-slate-400"><span class="text-brand-400">/verify</span></div>
+                    <div class="cmd-chip px-3 py-2 rounded-lg bg-slate-950/60 border border-slate-800/80 mono text-[12px] text-slate-400"><span class="text-brand-400">/find</span> <span class="text-slate-600">text</span></div>
+                    <div class="cmd-chip px-3 py-2 rounded-lg bg-slate-950/60 border border-slate-800/80 mono text-[12px] text-slate-400"><span class="text-brand-400">/reply</span> <span class="text-slate-600">id</span></div>
+                    <div class="cmd-chip px-3 py-2 rounded-lg bg-slate-950/60 border border-slate-800/80 mono text-[12px] text-slate-400"><span class="text-brand-400">/react</span> <span class="text-slate-600">id</span></div>
+                    <div class="cmd-chip px-3 py-2 rounded-lg bg-slate-950/60 border border-slate-800/80 mono text-[12px] text-slate-400"><span class="text-brand-400">/clear</span></div>
+                    <div class="cmd-chip px-3 py-2 rounded-lg bg-slate-950/60 border border-slate-800/80 mono text-[12px] text-slate-400"><span class="text-brand-400">/clearall</span></div>
+                    <div class="cmd-chip px-3 py-2 rounded-lg bg-slate-950/60 border border-slate-800/80 mono text-[12px] text-slate-400"><span class="text-brand-400">/stop</span></div>
+                    <div class="cmd-chip px-3 py-2 rounded-lg bg-slate-950/60 border border-slate-800/80 mono text-[12px] text-slate-400"><span class="text-brand-400">/del</span> <span class="text-slate-600">id</span></div>
+                </div>
+            </div>
+
+            <div class="reveal d1 bg-slate-900/40 border border-slate-800/80 rounded-2xl p-6">
+                <h3 class="text-sm font-semibold text-slate-300 mb-4 flex items-center gap-2">
+                    <span class="w-1.5 h-1.5 rounded-full bg-violet-400"></span>
+                    Hotkeys
+                </h3>
+                <div class="space-y-2">
+                    <div class="cmd-chip flex items-center justify-between px-3 py-2 rounded-lg bg-slate-950/60 border border-slate-800/80">
+                        <span class="text-xs text-slate-400">Open menu</span>
+                        <kbd class="mono text-[11px] px-2 py-0.5 rounded bg-slate-800 border border-slate-700 text-brand-300">M</kbd>
+                    </div>
+                    <div class="cmd-chip flex items-center justify-between px-3 py-2 rounded-lg bg-slate-950/60 border border-slate-800/80">
+                        <span class="text-xs text-slate-400">Add by IP</span>
+                        <kbd class="mono text-[11px] px-2 py-0.5 rounded bg-slate-800 border border-slate-700 text-brand-300">I</kbd>
+                    </div>
+                    <div class="cmd-chip flex items-center justify-between px-3 py-2 rounded-lg bg-slate-950/60 border border-slate-800/80">
+                        <span class="text-xs text-slate-400">Show add code</span>
+                        <kbd class="mono text-[11px] px-2 py-0.5 rounded bg-slate-800 border border-slate-700 text-brand-300">Ctrl+Z</kbd>
+                    </div>
+                    <div class="cmd-chip flex items-center justify-between px-3 py-2 rounded-lg bg-slate-950/60 border border-slate-800/80">
+                        <span class="text-xs text-slate-400">Start / Accept / Reject</span>
+                        <div class="flex gap-1">
+                            <kbd class="mono text-[11px] px-2 py-0.5 rounded bg-slate-800 border border-slate-700 text-brand-300">S</kbd>
+                            <kbd class="mono text-[11px] px-2 py-0.5 rounded bg-slate-800 border border-slate-700 text-brand-300">Y</kbd>
+                            <kbd class="mono text-[11px] px-2 py-0.5 rounded bg-slate-800 border border-slate-700 text-brand-300">X</kbd>
+                        </div>
+                    </div>
+                    <div class="cmd-chip flex items-center justify-between px-3 py-2 rounded-lg bg-slate-950/60 border border-slate-800/80">
+                        <span class="text-xs text-slate-400">Lock / Quit</span>
+                        <div class="flex gap-1">
+                            <kbd class="mono text-[11px] px-2 py-0.5 rounded bg-slate-800 border border-slate-700 text-brand-300">Ctrl+L</kbd>
+                            <kbd class="mono text-[11px] px-2 py-0.5 rounded bg-slate-800 border border-slate-700 text-brand-300">Ctrl+Q</kbd>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
     </section>
 
-    <footer class="border-t border-slate-900 py-12 text-center text-sm text-slate-500">
-        <div class="max-w-7xl mx-auto px-6 flex flex-col md:flex-row items-center justify-between gap-4">
-            <div class="flex items-center gap-2">
-                <img src="LANMess.png" alt="Logo" class="w-5 h-5 object-contain opacity-75">
-                <span>LANMess v1.1.10</span>
+    <!-- ============ INSTALL ============ -->
+    <section id="install" class="py-24 md:py-32 border-t border-slate-900/80">
+        <div class="max-w-4xl mx-auto px-6 text-center reveal">
+            <div class="section-badge mb-4 mx-auto">Install</div>
+            <h2 class="text-3xl md:text-5xl font-bold tracking-tight mb-4">
+                Ready in <span class="text-brand-400">one command.</span>
+            </h2>
+            <p class="text-slate-400 mb-10 text-lg">
+                Requires Python 3.9 or newer. No external services. No API keys.
+            </p>
+
+            <div class="relative group max-w-2xl mx-auto">
+                <div class="absolute -inset-1 bg-gradient-to-r from-brand-500/40 to-violet-500/40 rounded-2xl blur-xl opacity-60 group-hover:opacity-100 transition-opacity duration-500"></div>
+                <div class="relative bg-slate-950 border border-slate-800 rounded-2xl p-6 flex flex-col sm:flex-row items-center justify-between gap-4">
+                    <div class="flex items-center gap-3 w-full sm:w-auto">
+                        <span class="text-emerald-400 mono text-lg">$</span>
+                        <span class="mono text-slate-200 text-sm sm:text-base">pip install lanmess</span>
+                    </div>
+                    <button onclick="navigator.clipboard.writeText('pip install lanmess'); this.textContent='Copied!'; setTimeout(()=>this.textContent='Copy', 1500)" class="w-full sm:w-auto px-4 py-2 text-xs font-semibold rounded-lg bg-slate-800 hover:bg-slate-700 border border-slate-700 transition-all duration-300 hover:-translate-y-0.5 text-slate-300">
+                        Copy
+                    </button>
+                </div>
             </div>
-            <p>Licensed under the <a href="https://github.com/virensahti-nl/lanmess/blob/main/LICENSE" target="_blank" class="text-slate-400 underline hover:text-white">MIT License</a>.</p>
+
+            <div class="mt-16 grid sm:grid-cols-3 gap-4 text-left">
+                <a href="https://github.com/virensahti-nl/lanmess/releases/latest" target="_blank" rel="noopener" class="feature-card bg-slate-900/40 border border-slate-800/80 rounded-xl p-5">
+                    <div class="text-brand-400 mb-3">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+                    </div>
+                    <div class="font-semibold text-sm mb-1">Releases</div>
+                    <div class="text-xs text-slate-500">Standalone binaries & source</div>
+                </a>
+                <a href="https://github.com/virensahti-nl/lanmess" target="_blank" rel="noopener" class="feature-card bg-slate-900/40 border border-slate-800/80 rounded-xl p-5">
+                    <div class="text-brand-400 mb-3">
+                        <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24"><path d="M12 .3a12 12 0 0 0-3.8 23.4c.6.1.8-.3.8-.6v-2.2c-3.3.7-4-1.6-4-1.6-.6-1.4-1.4-1.8-1.4-1.8-1-.7.1-.7.1-.7 1.2.1 1.8 1.2 1.8 1.2 1 1.8 2.8 1.3 3.4 1 .1-.7.4-1.3.8-1.6-2.7-.3-5.5-1.3-5.5-6 0-1.3.5-2.3 1.2-3.2-.1-.3-.5-1.5.1-3.2 0 0 1-.3 3.3 1.2a11.5 11.5 0 0 1 6 0c2.3-1.5 3.3-1.2 3.3-1.2.7 1.7.3 2.9.1 3.2.8.8 1.2 1.9 1.2 3.2 0 4.6-2.8 5.6-5.5 6 .4.4.8 1.1.8 2.2v3.3c0 .3.2.7.8.6A12 12 0 0 0 12 .3"/></svg>
+                    </div>
+                    <div class="font-semibold text-sm mb-1">Source</div>
+                    <div class="text-xs text-slate-500">Read the code, inspect primitives</div>
+                </a>
+                <a href="https://github.com/virensahti-nl/lanmess/blob/main/LICENSE" target="_blank" rel="noopener" class="feature-card bg-slate-900/40 border border-slate-800/80 rounded-xl p-5">
+                    <div class="text-brand-400 mb-3">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                    </div>
+                    <div class="font-semibold text-sm mb-1">MIT License</div>
+                    <div class="text-xs text-slate-500">Fully open, forever</div>
+                </a>
+            </div>
+        </div>
+    </section>
+
+    <!-- ============ FOOTER ============ -->
+    <footer class="border-t border-slate-900/80 py-12 mt-12">
+        <div class="max-w-7xl mx-auto px-6 flex flex-col md:flex-row items-center justify-between gap-6">
+            <div class="flex items-center gap-3">
+                <img src="LANMess.png" alt="LANMess Logo" class="w-6 h-6 rounded object-contain opacity-80">
+                <span class="text-sm text-slate-400">LANMess <span class="text-slate-600">v1.1.10</span></span>
+            </div>
+            <p class="text-xs text-slate-500">
+                Licensed under the <a href="https://github.com/virensahti-nl/lanmess/blob/main/LICENSE" target="_blank" rel="noopener" class="text-slate-400 underline hover:text-brand-300 transition-colors">MIT License</a> · No tracking · No telemetry
+            </p>
         </div>
     </footer>
 
+    <!-- Scroll reveal -->
+    <script>
+        (function() {
+            const els = document.querySelectorAll('.reveal');
+            const io = new IntersectionObserver((entries) => {
+                entries.forEach(e => {
+                    if (e.isIntersecting) {
+                        e.target.classList.add('visible');
+                        io.unobserve(e.target);
+                    }
+                });
+            }, { threshold: 0.15, rootMargin: '0px 0px -60px 0px' });
+            els.forEach(el => io.observe(el));
+        })();
+    </script>
 </body>
 </html>
