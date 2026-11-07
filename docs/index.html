@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LANMess – Secure LAN Messenger & TUI</title>
+    <link rel="icon" type="image/png" href="LANMess.png">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            50: '#eff6ff',
+                            100: '#dbeafe',
+                            500: '#3b82f6',
+                            600: '#2563eb',
+                            700: '#1d4ed8',
+                            900: '#1e3a8a',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        code, pre { font-family: 'JetBrains Mono', monospace; }
+    </style>
+</head>
+<body class="bg-slate-950 text-slate-100 antialiased selection:bg-brand-500 selection:text-white">
+
+    <header class="sticky top-0 z-50 backdrop-blur-md bg-slate-950/80 border-b border-slate-800">
+        <div class="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
+            <div class="flex items-center gap-3">
+                <img src="LANMess.png" alt="LANMess Logo" class="w-8 h-8 rounded-lg object-contain bg-slate-900 p-1 border border-slate-800">
+                <span class="font-bold text-lg tracking-tight">LANMess</span>
+                <span class="text-xs bg-brand-500/10 text-brand-400 border border-brand-500/20 px-2 py-0.5 rounded-full font-mono">v1.1.10</span>
+            </div>
+            <nav class="hidden md:flex items-center gap-6 text-sm text-slate-400">
+                <a href="#features" class="hover:text-white transition">Features</a>
+                <a href="#security" class="hover:text-white transition">Security</a>
+                <a href="#install" class="hover:text-white transition">Installation</a>
+            </nav>
+            <div class="flex items-center gap-3">
+                <a href="https://github.com/virensahti-nl/lanmess/releases/latest" target="_blank" class="hidden sm:inline-flex items-center gap-2 bg-brand-600 hover:bg-brand-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition shadow-lg shadow-brand-600/20">
+                    Latest Release
+                </a>
+                <a href="https://github.com/virensahti-nl/lanmess" target="_blank" class="inline-flex items-center gap-2 bg-slate-900 hover:bg-slate-800 border border-slate-700 px-4 py-2 rounded-lg text-sm font-medium transition">
+                    GitHub
+                </a>
+            </div>
+        </div>
+    </header>
+
+    <section class="relative pt-20 pb-24 overflow-hidden border-b border-slate-900">
+        <div class="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-brand-900/20 via-slate-950/0 to-slate-950/0 pointer-events-none"></div>
+        <div class="max-w-5xl mx-auto px-6 text-center relative z-10">
+            
+            <div class="mb-8 flex justify-center">
+                <div class="p-4 bg-slate-900/60 border border-slate-800 rounded-2xl shadow-2xl backdrop-blur">
+                    <img src="LANMess.png" alt="LANMess Logo" class="h-20 w-auto object-contain">
+                </div>
+            </div>
+
+            <h1 class="text-4xl md:text-6xl font-extrabold tracking-tight mb-6">
+                Secure Encrypted Messaging for your <span class="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-brand-600">Local Network</span>
+            </h1>
+            <p class="text-lg md:text-xl text-slate-400 max-w-2xl mx-auto mb-10">
+                A LAN-only, end-to-end encrypted messenger featuring a powerful Terminal User Interface (TUI). No internet, external servers, or cloud required.
+            </p>
+            
+            <div class="flex flex-col sm:flex-row justify-center gap-4 mb-16">
+                <a href="https://github.com/virensahti-nl/lanmess/releases/latest" target="_blank" class="bg-brand-600 hover:bg-brand-700 text-white font-semibold px-8 py-3.5 rounded-xl shadow-lg shadow-brand-600/20 transition flex items-center justify-center gap-2">
+                    Download Newest Release
+                </a>
+                <a href="#install" class="bg-slate-900 hover:bg-slate-800 text-slate-300 font-semibold px-8 py-3.5 rounded-xl border border-slate-800 transition">
+                    Install via Pip
+                </a>
+            </div>
+
+            <div class="text-left bg-slate-900 border border-slate-800 rounded-2xl shadow-2xl overflow-hidden max-w-3xl mx-auto">
+                <div class="bg-slate-950 px-4 py-3 border-b border-slate-800 flex items-center gap-2">
+                    <div class="w-3 h-3 rounded-full bg-red-500/80"></div>
+                    <div class="w-3 h-3 rounded-full bg-yellow-500/80"></div>
+                    <div class="w-3 h-3 rounded-full bg-green-500/80"></div>
+                    <span class="text-xs text-slate-500 font-mono ml-2">terminal — lanmess</span>
+                </div>
+                <div class="p-6 font-mono text-xs md:text-sm text-slate-300 space-y-2">
+                    <p class="text-slate-500">$ pip install lanmess</p>
+                    <p><span class="text-brand-400">$</span> lanmess</p>
+                    <p class="text-emerald-400">✓ Vault unlocked via Argon2id.</p>
+                    <p class="text-slate-400">→ Discovery started on port 50505 (UDP).</p>
+                    <p class="text-brand-500">→ Connected with peers on local network.</p>
+                </div>
+            </div>
+
+        </div>
+    </section>
+
+    <section id="features" class="py-24 max-w-7xl mx-auto px-6">
+        <div class="text-center max-w-2xl mx-auto mb-16">
+            <h2 class="text-3xl font-bold tracking-tight mb-4">Powerful Features, Maximum Privacy</h2>
+            <p class="text-slate-400">Designed for direct, zero-trust communication across your trusted subnets.</p>
+        </div>
+
+        <div class="grid md:grid-cols-3 gap-8">
+            <div class="bg-slate-900/50 border border-slate-800/80 p-8 rounded-2xl hover:border-slate-700 transition">
+                <div class="w-12 h-12 bg-brand-500/10 text-brand-400 rounded-xl flex items-center justify-center font-bold text-xl mb-6">🔒</div>
+                <h3 class="text-xl font-semibold mb-3">End-to-End Encryption</h3>
+                <p class="text-slate-400 text-sm leading-relaxed">
+                    Powered by X25519 key exchange, AES-GCM encryption, and hash ratchets. Every frame is authenticated with Ed25519 signatures.
+                </p>
+            </div>
+            <div class="bg-slate-900/50 border border-slate-800/80 p-8 rounded-2xl hover:border-slate-700 transition">
+                <div class="w-12 h-12 bg-brand-500/10 text-brand-400 rounded-xl flex items-center justify-center font-bold text-xl mb-6">⚡</div>
+                <h3 class="text-xl font-semibold mb-3">Automatic Peer Discovery</h3>
+                <p class="text-slate-400 text-sm leading-relaxed">
+                    Zero configuration needed. Discover active peers instantly via UDP broadcast packets inside your local area network.
+                </p>
+            </div>
+            <div class="bg-slate-900/50 border border-slate-800/80 p-8 rounded-2xl hover:border-slate-700 transition">
+                <div class="w-12 h-12 bg-brand-500/10 text-brand-400 rounded-xl flex items-center justify-center font-bold text-xl mb-6">💻</div>
+                <h3 class="text-xl font-semibold mb-3">Sleek TUI Interface</h3>
+                <p class="text-slate-400 text-sm leading-relaxed">
+                    Lightning-fast Terminal User Interface built with Textual, featuring live presence monitoring, typing indicators, and desktop notifications.
+                </p>
+            </div>
+        </div>
+    </section>
+
+    <section id="security" class="py-20 bg-slate-900/30 border-y border-slate-900">
+        <div class="max-w-5xl mx-auto px-6 grid md:grid-cols-2 gap-12 items-center">
+            <div>
+                <h2 class="text-3xl font-bold tracking-tight mb-6">Robust Local Security Architecture</h2>
+                <ul class="space-y-4 text-slate-300 text-sm">
+                    <li class="flex items-start gap-3">
+                        <span class="text-emerald-400 font-bold">✓</span>
+                        <span><strong>Argon2id Vault:</strong> Local databases and master keys are strongly encrypted and protected behind a secure PIN code.</span>
+                    </li>
+                    <li class="flex items-start gap-3">
+                        <span class="text-emerald-400 font-bold">✓</span>
+                        <span><strong>HMAC Audit Logs:</strong> Security events and actions are cryptographically chained to maintain tamper evidence.</span>
+                    </li>
+                    <li class="flex items-start gap-3">
+                        <span class="text-emerald-400 font-bold">✓</span>
+                        <span><strong>Safety Numbers:</strong> Manually compare safety fingerprints to prevent man-in-the-middle attacks.</span>
+                    </li>
+                </ul>
+            </div>
+            <div class="bg-slate-950 border border-slate-800 p-6 rounded-2xl font-mono text-xs text-slate-400 space-y-3">
+                <p class="text-slate-500"># configuration parameters</p>
+                <p><span class="text-purple-400">PBKDF2_ITERATIONS</span> = 600_000</p>
+                <p><span class="text-purple-400">ARGON2_TIME_COST</span> = 3</p>
+                <p><span class="text-purple-400">ARGON2_MEMORY_COST</span> = 64 * 1024</p>
+                <p><span class="text-purple-400">PIN_LOCKOUT_STEPS</span> = ((5, 30), (10, 300), ...)</p>
+                <p class="text-emerald-400"># Zero cloud dependency.</p>
+            </div>
+        </div>
+    </section>
+
+    <section id="install" class="py-24 max-w-4xl mx-auto px-6 text-center">
+        <h2 class="text-3xl font-bold tracking-tight mb-4">Quick Installation</h2>
+        <p class="text-slate-400 mb-8">Get started instantly via Python Package Index (PyPI).</p>
+
+        <div class="bg-slate-900 border border-slate-800 rounded-xl p-4 text-left max-w-xl mx-auto font-mono text-sm flex items-center justify-between shadow-lg">
+            <span class="text-emerald-400">$ pip install lanmess</span>
+            <span class="text-xs text-slate-500">Python &gt;= 3.9</span>
+        </div>
+    </section>
+
+    <footer class="border-t border-slate-900 py-12 text-center text-sm text-slate-500">
+        <div class="max-w-7xl mx-auto px-6 flex flex-col md:flex-row items-center justify-between gap-4">
+            <div class="flex items-center gap-2">
+                <img src="LANMess.png" alt="Logo" class="w-5 h-5 object-contain opacity-75">
+                <span>LANMess v1.1.10</span>
+            </div>
+            <p>Licensed under the <a href="https://github.com/virensahti-nl/lanmess/blob/main/LICENSE" target="_blank" class="text-slate-400 underline hover:text-white">MIT License</a>.</p>
+        </div>
+    </footer>
+
+</body>
+</html>
