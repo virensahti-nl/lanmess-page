@@ -13,19 +13,8 @@
                     colors: {
                         obsidian: '#0a0908',
                         surface: '#14110f',
-                        gold: {
-                            300: '#fcd34d',
-                            400: '#fbbf24',
-                            500: '#f59e0b',
-                            600: '#d97706',
-                            700: '#b45309',
-                        },
-                        bronze: {
-                            400: '#fb923c',
-                            500: '#f97316',
-                            600: '#ea580c',
-                            700: '#c2410c',
-                        }
+                        gold: { 300: '#fcd34d', 400: '#fbbf24', 500: '#f59e0b', 600: '#d97706', 700: '#b45309' },
+                        bronze: { 400: '#fb923c', 500: '#f97316', 600: '#ea580c', 700: '#c2410c' }
                     },
                     fontFamily: {
                         sans: ['Outfit', 'system-ui', 'sans-serif'],
@@ -34,26 +23,12 @@
                     animation: {
                         'scan': 'scan 6s linear infinite',
                         'float': 'float 8s ease-in-out infinite',
-                        'glow-pulse': 'glowPulse 4s ease-in-out infinite',
                         'marquee': 'marquee 30s linear infinite',
                     },
                     keyframes: {
-                        scan: {
-                            '0%': { transform: 'translateY(-100%)' },
-                            '100%': { transform: 'translateY(100%)' },
-                        },
-                        float: {
-                            '0%, 100%': { transform: 'translateY(0)' },
-                            '50%': { transform: 'translateY(-12px)' },
-                        },
-                        glowPulse: {
-                            '0%, 100%': { opacity: '0.3', filter: 'blur(60px)' },
-                            '50%': { opacity: '0.6', filter: 'blur(80px)' },
-                        },
-                        marquee: {
-                            '0%': { transform: 'translateX(0%)' },
-                            '100%': { transform: 'translateX(-50%)' },
-                        }
+                        scan: { '0%': { transform: 'translateY(-100%)' }, '100%': { transform: 'translateY(100%)' } },
+                        float: { '0%, 100%': { transform: 'translateY(0)' }, '50%': { transform: 'translateY(-12px)' } },
+                        marquee: { '0%': { transform: 'translateX(0%)' }, '100%': { transform: 'translateX(-50%)' } }
                     }
                 }
             }
@@ -63,28 +38,20 @@
     
     <style>
         * { -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; }
-        html { scroll-behavior: smooth; overflow-x: hidden; }
+        html { 
+            scroll-behavior: smooth; 
+            overflow-x: hidden; 
+        }
         body { 
             font-family: 'Outfit', sans-serif; 
             background-color: #0a0908; 
             color: #f5f5f4;
             overflow-x: hidden;
             width: 100%;
-            position: relative;
+            margin: 0;
+            padding: 0;
         }
         code, pre, .mono { font-family: 'Fira Code', monospace; }
-
-        .grid-overlay {
-            position: fixed;
-            inset: 0;
-            z-index: 0;
-            background-image: 
-                linear-gradient(rgba(245, 158, 11, 0.03) 1px, transparent 1px),
-                linear-gradient(90deg, rgba(245, 158, 11, 0.03) 1px, transparent 1px);
-            background-size: 40px 40px;
-            mask-image: radial-gradient(circle at center, black 10%, transparent 80%);
-            pointer-events: none;
-        }
 
         .glow-blob {
             position: absolute;
@@ -92,9 +59,7 @@
             height: 400px;
             background: radial-gradient(circle, rgba(245, 158, 11, 0.12) 0%, transparent 70%);
             border-radius: 50%;
-            z-index: 0;
             pointer-events: none;
-            animation: glow-pulse 8s ease-in-out infinite;
         }
 
         @media (min-width: 768px) {
@@ -136,6 +101,7 @@
             position: relative;
             overflow: hidden;
             width: 100%;
+            max-width: 100%;
         }
 
         .terminal-scan {
@@ -145,6 +111,12 @@
             animation: scan 8s linear infinite;
             z-index: 20;
             pointer-events: none;
+        }
+
+        .terminal-window pre {
+            max-width: 100%;
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
         }
 
         .text-gradient-gold {
@@ -167,10 +139,7 @@
             transition: all 0.7s cubic-bezier(0.16, 1, 0.3, 1);
         }
 
-        .reveal.active {
-            opacity: 1;
-            transform: translateY(0);
-        }
+        .reveal.active { opacity: 1; transform: translateY(0); }
 
         .btn-gold {
             background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
@@ -224,20 +193,24 @@
             overflow-x: auto;
             -webkit-overflow-scrolling: touch;
         }
+
+        section { max-width: 100vw; overflow-x: hidden; }
     </style>
 </head>
-<body class="antialiased selection:bg-gold-500 selection:text-obsidian">
+<body class="antialiased selection:bg-gold-500 selection:text-obsidian flex flex-col min-h-screen relative">
 
-    <div class="glow-blob top-0 left-1/2 -translate-x-1/2 -translate-y-1/2"></div>
-    <div class="glow-blob bottom-0 right-0 translate-x-1/3 translate-y-1/3" style="animation-delay: -4s;"></div>
-    <div class="grid-overlay"></div>
+    <!-- Fixed Background Container (Prevents extra scrolling space) -->
+    <div class="fixed inset-0 z-0 pointer-events-none overflow-hidden">
+        <div class="glow-blob top-0 left-1/2 -translate-x-1/2 -translate-y-1/2"></div>
+        <div class="glow-blob bottom-0 right-0 translate-x-1/3 translate-y-1/3"></div>
+        <div class="absolute inset-0" style="background-image: linear-gradient(rgba(245, 158, 11, 0.03) 1px, transparent 1px), linear-gradient(90deg, rgba(245, 158, 11, 0.03) 1px, transparent 1px); background-size: 40px 40px; mask-image: radial-gradient(circle at center, black 10%, transparent 80%);"></div>
+    </div>
 
     <header class="fixed top-0 w-full z-50 border-b border-white/5 bg-obsidian/80 backdrop-blur-md">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 h-16 sm:h-20 flex items-center justify-between">
             <a href="#" class="flex items-center group">
                 <span class="font-black text-2xl sm:text-3xl tracking-tighter text-transparent bg-clip-text bg-gradient-to-r from-white to-gray-400 group-hover:from-gold-300 group-hover:to-gold-500 transition-all duration-300">LANMess</span>
             </a>
-            
             <nav class="hidden md:flex items-center gap-6 lg:gap-8 text-sm font-medium text-gray-400">
                 <a href="#why" class="hover:text-gold-300 transition-colors">Why LANMess</a>
                 <a href="#how-it-works" class="hover:text-gold-300 transition-colors">How it Works</a>
@@ -245,7 +218,6 @@
                 <a href="#features" class="hover:text-gold-300 transition-colors">Features</a>
                 <a href="#faq" class="hover:text-gold-300 transition-colors">FAQ</a>
             </nav>
-            
             <div class="flex items-center gap-3">
                 <a href="https://github.com/virensahti-nl/lanmess/releases/latest" target="_blank" rel="noopener" class="btn-gold px-4 sm:px-5 py-2 sm:py-2.5 rounded-lg text-xs sm:text-sm font-bold flex items-center gap-2">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
@@ -256,36 +228,27 @@
         </div>
     </header>
 
-    <main class="relative z-10 pt-16 sm:pt-20">
+    <main class="relative z-10 pt-16 sm:pt-20 flex-1 w-full overflow-x-hidden">
         
-        <section class="relative pt-16 pb-16 sm:pt-24 sm:pb-24 lg:pt-32 lg:pb-32 overflow-hidden flex items-center min-h-[85vh]">
+        <section class="relative pt-16 pb-16 sm:pt-24 sm:pb-24 lg:pt-32 lg:pb-32 flex items-center min-h-[85vh]">
             <div class="max-w-7xl mx-auto px-4 sm:px-6 w-full">
                 <div class="grid lg:grid-cols-2 gap-10 lg:gap-16 items-center">
-                    
-                    <div class="reveal">
+                    <div class="reveal min-w-0">
                         <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-gold-500/30 bg-gold-500/5 text-gold-400 text-[10px] sm:text-xs font-mono mb-6 sm:mb-8 uppercase tracking-widest">
                             <span class="w-2 h-2 rounded-full bg-gold-400 animate-pulse"></span>
                             Based on Local Network
                         </div>
-                        
                         <h1 class="text-4xl sm:text-5xl lg:text-6xl xl:text-7xl font-black tracking-tighter leading-[1.05] mb-4 sm:mb-6">
                             Whisper <br>
                             <span class="text-gradient-gold">your secrets.</span>
                         </h1>
-                        
                         <p class="text-base sm:text-lg text-gray-400 leading-relaxed mb-8 max-w-lg font-light">
-                            A terminal-based, end-to-end encrypted messenger that operates entirely on your Local Area Network. No internet connection, no cloud servers, and zero telemetry. Built for security researchers and privacy advocates.
+                            A terminal-based, end-to-end encrypted messenger that operates entirely on your Local Area Network. No internet connection required, no cloud servers, and zero telemetry. Built for security researchers and privacy advocates.
                         </p>
-                        
                         <div class="flex flex-col sm:flex-row gap-3 sm:gap-4 mb-10 sm:mb-16">
-                            <a href="#install" class="btn-gold px-6 sm:px-8 py-3.5 sm:py-4 rounded-xl text-sm sm:text-base font-bold flex items-center justify-center gap-2">
-                                Install
-                            </a>
-                            <a href="https://github.com/virensahti-nl/lanmess" target="_blank" rel="noopener" class="btn-outline px-6 sm:px-8 py-3.5 sm:py-4 rounded-xl text-sm sm:text-base font-bold flex items-center justify-center gap-2">
-                                View Source
-                            </a>
+                            <a href="#install" class="btn-gold px-6 sm:px-8 py-3.5 sm:py-4 rounded-xl text-sm sm:text-base font-bold flex items-center justify-center gap-2">Install</a>
+                            <a href="https://github.com/virensahti-nl/lanmess" target="_blank" rel="noopener" class="btn-outline px-6 sm:px-8 py-3.5 sm:py-4 rounded-xl text-sm sm:text-base font-bold flex items-center justify-center gap-2">View Source</a>
                         </div>
-
                         <div class="grid grid-cols-3 gap-4 sm:gap-6 border-t border-white/10 pt-6 sm:pt-8">
                             <div>
                                 <div class="text-xl sm:text-3xl font-bold text-white mb-1">LAN</div>
@@ -293,7 +256,7 @@
                             </div>
                             <div>
                                 <div class="text-xl sm:text-3xl font-bold text-white mb-1">0</div>
-                                <div class="text-[10px] sm:text-xs text-gray-500 uppercase tracking-wider">Cloud Dependencies</div>
+                                <div class="text-[10px] sm:text-xs text-gray-500 uppercase tracking-wider">Cloud Deps</div>
                             </div>
                             <div>
                                 <div class="text-xl sm:text-3xl font-bold text-white mb-1">X25519</div>
@@ -302,9 +265,8 @@
                         </div>
                     </div>
 
-                    <div class="reveal relative w-full" style="transition-delay: 0.2s;">
+                    <div class="reveal relative w-full min-w-0" style="transition-delay: 0.2s;">
                         <div class="absolute -inset-4 sm:-inset-10 bg-gradient-to-tr from-gold-600/20 via-transparent to-bronze-600/20 blur-2xl sm:blur-3xl rounded-full"></div>
-                        
                         <div class="terminal-window relative z-10">
                             <div class="terminal-scan"></div>
                             <div class="bg-[#14110f] px-3 sm:px-4 py-2 sm:py-3 border-b border-white/5 flex items-center justify-between">
@@ -313,36 +275,23 @@
                                     <div class="w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-full bg-gold-500/30 border border-gold-500/60"></div>
                                     <div class="w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-full bg-gold-300/30 border border-gold-300/60"></div>
                                 </div>
-                                <span class="text-[10px] sm:text-xs text-gray-500 font-mono">user@lanmess: ~</span>
+                                <span class="text-[10px] sm:text-xs text-gray-500 font-mono">LANMess 1.1.10</span>
                             </div>
-                            <div class="p-3 sm:p-6 font-mono text-[10px] sm:text-xs md:text-sm leading-relaxed overflow-x-auto">
-                                <div class="text-gray-500">$ lanmess</div>
-                                <div class="text-gold-400 mt-1 sm:mt-2">✓ Vault unlocked via Argon2id.</div>
-                                <div class="text-gray-400">→ Discovery started on port 50505 (UDP).</div>
-                                <div class="text-gray-400">→ TCP Listener bound to :50510</div>
-                                <div class="text-bronze-400 mt-1 sm:mt-2">● 2 peers discovered on LAN.</div>
-                                
-                                <div class="mt-3 sm:mt-6 border border-white/10 rounded-lg p-2 sm:p-4 bg-black/50">
-                                    <div class="text-[9px] sm:text-xs text-gray-500 mb-2 sm:mb-3">--- ACTIVE CONTACTS ---</div>
-                                    <div class="flex justify-between items-center mb-1 sm:mb-2">
-                                        <div class="text-white"><span class="text-gold-400">●</span> alice</div>
-                                        <div class="text-[9px] sm:text-xs text-gold-400 bg-gold-500/10 px-1.5 py-0.5 rounded">verified *</div>
-                                    </div>
-                                    <div class="flex justify-between items-center mb-1 sm:mb-2">
-                                        <div class="text-white"><span class="text-gold-400">●</span> bob</div>
-                                        <div class="text-[9px] sm:text-xs text-gray-500">active</div>
-                                    </div>
-                                    <div class="flex justify-between items-center">
-                                        <div class="text-gray-500"><span class="text-gray-600">○</span> carol</div>
-                                        <div class="text-[9px] sm:text-xs text-gray-600">waiting</div>
-                                    </div>
+                            <div class="p-2 sm:p-4 font-mono text-[9px] sm:text-xs md:text-sm leading-relaxed overflow-x-auto flex gap-2 sm:gap-4 bg-[#0d0b0a]">
+                                <div class="w-1/3 border-r border-white/10 pr-2 sm:pr-4 min-w-0">
+                                    <div class="text-gray-400 font-bold mb-2 sm:mb-3 border-b border-white/10 pb-1 text-center">Contacts</div>
+                                    <div class="text-gold-400 bg-white/5 px-1 py-0.5 rounded truncate">(1) alice * ● [active]</div>
+                                    <div class="text-gray-300 px-1 py-0.5 truncate">bob ● [active]</div>
                                 </div>
-
-                                <div class="mt-3 sm:mt-6 text-[10px] sm:text-sm">
-                                    <span class="text-bronze-400">alice ▸</span> <span class="text-gray-300">hey, safety number matches ✓</span>
-                                </div>
-                                <div class="text-[10px] sm:text-sm mt-1">
-                                    <span class="text-gold-400">you ▸</span> <span class="animate-pulse">_</span>
+                                <div class="w-2/3 flex flex-col min-w-0">
+                                    <div class="text-gray-300 font-bold mb-2 truncate">alice *verified (online)</div>
+                                    <div class="flex-1 min-h-[120px] sm:min-h-[160px]">
+                                        <div class="text-gray-400"><span class="text-gold-400">[#1] [10:00] You:</span> hey</div>
+                                        <div class="text-gray-400"><span class="text-bronze-400">[#2] [10:01] alice:</span> safety number matches ✓</div>
+                                    </div>
+                                    <div class="mt-2 border-t border-white/10 pt-2">
+                                        <div class="text-gray-500 truncate">Message or /command (M for menu)...</div>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -379,14 +328,9 @@
         <section id="why" class="py-16 sm:py-24 relative">
             <div class="max-w-7xl mx-auto px-4 sm:px-6">
                 <div class="text-center max-w-3xl mx-auto mb-12 sm:mb-16 reveal">
-                    <h2 class="text-2xl sm:text-3xl md:text-4xl font-bold tracking-tight mb-4 sm:mb-6">
-                        Why choose <span class="text-gradient-gold">LANMess?</span>
-                    </h2>
-                    <p class="text-base sm:text-lg text-gray-400 font-light">
-                        The modern internet is built on centralization and data harvesting. LANMess is a return to localized, peer-to-peer communication where you control the infrastructure.
-                    </p>
+                    <h2 class="text-2xl sm:text-3xl md:text-4xl font-bold tracking-tight mb-4 sm:mb-6">Why choose <span class="text-gradient-gold">LANMess?</span></h2>
+                    <p class="text-base sm:text-lg text-gray-400 font-light">The modern internet is built on centralization and data harvesting. LANMess is a return to localized, peer-to-peer communication where you control the infrastructure.</p>
                 </div>
-
                 <div class="table-responsive glass-card rounded-xl sm:rounded-2xl reveal">
                     <table class="min-w-full text-sm sm:text-base text-left border-collapse">
                         <thead>
@@ -397,36 +341,12 @@
                             </tr>
                         </thead>
                         <tbody class="divide-y divide-white/5 text-gray-400">
-                            <tr class="hover:bg-white/5 transition-colors">
-                                <td class="p-3 sm:p-5">Internet Connection Required</td>
-                                <td class="p-3 sm:p-5 text-center font-semibold text-white">No (if LAN Only)</td>
-                                <td class="p-3 sm:p-5 text-center">Yes</td>
-                            </tr>
-                            <tr class="hover:bg-white/5 transition-colors">
-                                <td class="p-3 sm:p-5">Data Leaves Your Network</td>
-                                <td class="p-3 sm:p-5 text-center font-semibold text-white">Never</td>
-                                <td class="p-3 sm:p-5 text-center">Always</td>
-                            </tr>
-                            <tr class="hover:bg-white/5 transition-colors">
-                                <td class="p-3 sm:p-5">Account / Phone Number Required</td>
-                                <td class="p-3 sm:p-5 text-center font-semibold text-white">None</td>
-                                <td class="p-3 sm:p-5 text-center">Usually</td>
-                            </tr>
-                            <tr class="hover:bg-white/5 transition-colors">
-                                <td class="p-3 sm:p-5">End-to-End Encryption</td>
-                                <td class="p-3 sm:p-5 text-center font-semibold text-gold-400">Yes (X25519)</td>
-                                <td class="p-3 sm:p-5 text-center">Mostly</td>
-                            </tr>
-                            <tr class="hover:bg-white/5 transition-colors">
-                                <td class="p-3 sm:p-5">Terminal User Interface (TUI)</td>
-                                <td class="p-3 sm:p-5 text-center font-semibold text-white">Native</td>
-                                <td class="p-3 sm:p-5 text-center">None</td>
-                            </tr>
-                            <tr class="hover:bg-white/5 transition-colors">
-                                <td class="p-3 sm:p-5">Auditable Open Source Code</td>
-                                <td class="p-3 sm:p-5 text-center font-semibold text-white">100%</td>
-                                <td class="p-3 sm:p-5 text-center">Rarely</td>
-                            </tr>
+                            <tr class="hover:bg-white/5 transition-colors"><td class="p-3 sm:p-5">Internet Connection Required</td><td class="p-3 sm:p-5 text-center font-semibold text-white">No (if LAN Only)</td><td class="p-3 sm:p-5 text-center">Yes</td></tr>
+                            <tr class="hover:bg-white/5 transition-colors"><td class="p-3 sm:p-5">Data Leaves Your Network</td><td class="p-3 sm:p-5 text-center font-semibold text-white">Never</td><td class="p-3 sm:p-5 text-center">Always</td></tr>
+                            <tr class="hover:bg-white/5 transition-colors"><td class="p-3 sm:p-5">Account / Phone Number Required</td><td class="p-3 sm:p-5 text-center font-semibold text-white">None</td><td class="p-3 sm:p-5 text-center">Usually</td></tr>
+                            <tr class="hover:bg-white/5 transition-colors"><td class="p-3 sm:p-5">End-to-End Encryption</td><td class="p-3 sm:p-5 text-center font-semibold text-gold-400">Yes (X25519)</td><td class="p-3 sm:p-5 text-center">Mostly</td></tr>
+                            <tr class="hover:bg-white/5 transition-colors"><td class="p-3 sm:p-5">Terminal User Interface (TUI)</td><td class="p-3 sm:p-5 text-center font-semibold text-white">Native</td><td class="p-3 sm:p-5 text-center">None</td></tr>
+                            <tr class="hover:bg-white/5 transition-colors"><td class="p-3 sm:p-5">Auditable Open Source Code</td><td class="p-3 sm:p-5 text-center font-semibold text-white">100%</td><td class="p-3 sm:p-5 text-center">Rarely</td></tr>
                         </tbody>
                     </table>
                 </div>
@@ -439,35 +359,26 @@
                     <h2 class="text-2xl sm:text-3xl md:text-4xl font-bold tracking-tight mb-4">How everything <span class="text-gradient-gold">works.</span></h2>
                     <p class="text-sm sm:text-base text-gray-400 font-light">From installation to encrypted message delivery.</p>
                 </div>
-
                 <div class="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
                     <div class="glass-card p-6 rounded-xl reveal">
                         <div class="text-gold-500 font-black text-2xl mb-3">01</div>
                         <h3 class="text-lg font-bold text-white mb-2">Vault Creation</h3>
-                        <p class="text-xs sm:text-sm text-gray-400 leading-relaxed">
-                            Upon first launch, you set a strong PIN. LANMess generates a random 32-byte master key and encrypts it using Argon2id derived from your PIN.
-                        </p>
+                        <p class="text-xs sm:text-sm text-gray-400 leading-relaxed">Upon first launch, you set a strong PIN. LANMess generates a random 32-byte master key and encrypts it using Argon2id derived from your PIN.</p>
                     </div>
                     <div class="glass-card p-6 rounded-xl reveal" style="transition-delay: 0.1s;">
                         <div class="text-gold-500 font-black text-2xl mb-3">02</div>
                         <h3 class="text-lg font-bold text-white mb-2">Peer Discovery</h3>
-                        <p class="text-xs sm:text-sm text-gray-400 leading-relaxed">
-                            The app broadcasts a UDP packet on port 50505. Other instances on the LAN hear this and cache your IP, port, and public keys automatically.
-                        </p>
+                        <p class="text-xs sm:text-sm text-gray-400 leading-relaxed">The app broadcasts a UDP packet on port 50505. Other instances on the LAN hear this and cache your IP, port, and public keys automatically.</p>
                     </div>
                     <div class="glass-card p-6 rounded-xl reveal" style="transition-delay: 0.2s;">
                         <div class="text-gold-500 font-black text-2xl mb-3">03</div>
                         <h3 class="text-lg font-bold text-white mb-2">Secure Adding</h3>
-                        <p class="text-xs sm:text-sm text-gray-400 leading-relaxed">
-                            To add a peer, you exchange an 8-digit TOTP code. This proves you share the same local network and are intentionally connecting to each other.
-                        </p>
+                        <p class="text-xs sm:text-sm text-gray-400 leading-relaxed">To add a peer, you exchange an 8-digit TOTP code. This proves you share the same local network and are intentionally connecting to each other.</p>
                     </div>
                     <div class="glass-card p-6 rounded-xl reveal" style="transition-delay: 0.3s;">
                         <div class="text-gold-500 font-black text-2xl mb-3">04</div>
                         <h3 class="text-lg font-bold text-white mb-2">Encrypted Chat</h3>
-                        <p class="text-xs sm:text-sm text-gray-400 leading-relaxed">
-                            A chat request triggers an X25519 ephemeral handshake. Once established, messages are encrypted with AES-GCM and signed with Ed25519.
-                        </p>
+                        <p class="text-xs sm:text-sm text-gray-400 leading-relaxed">A chat request triggers an X25519 ephemeral handshake. Once established, messages are encrypted with AES-GCM and signed with Ed25519.</p>
                     </div>
                 </div>
             </div>
@@ -476,7 +387,7 @@
         <section id="architecture" class="py-16 sm:py-24 relative">
             <div class="max-w-7xl mx-auto px-4 sm:px-6">
                 <div class="grid lg:grid-cols-2 gap-10 lg:gap-16 items-center">
-                    <div class="reveal">
+                    <div class="reveal min-w-0">
                         <h2 class="text-2xl sm:text-3xl md:text-4xl font-bold tracking-tight mb-4 sm:mb-6">
                             Cryptographic <br>
                             <span class="text-gradient-bronze">Architecture</span>
@@ -484,32 +395,31 @@
                         <p class="text-sm sm:text-base text-gray-400 mb-6 sm:mb-8 font-light">
                             LANMess does not rely on proprietary security through obscurity. It uses battle-tested, standard cryptographic primitives. Here is how a message is secured:
                         </p>
-
                         <div class="space-y-4 sm:space-y-6">
                             <div class="flex gap-3 sm:gap-4">
                                 <div class="flex items-center justify-center w-8 h-8 sm:w-10 sm:h-10 rounded-full border border-gold-500/50 bg-obsidian text-gold-400 font-mono text-xs sm:text-sm shrink-0">1</div>
-                                <div>
+                                <div class="min-w-0">
                                     <h4 class="font-bold text-white mb-1 text-sm sm:text-base">X25519 Handshake</h4>
                                     <p class="text-xs sm:text-sm text-gray-400">An ephemeral key exchange creates a shared secret that is never sent over the network.</p>
                                 </div>
                             </div>
                             <div class="flex gap-3 sm:gap-4">
                                 <div class="flex items-center justify-center w-8 h-8 sm:w-10 sm:h-10 rounded-full border border-bronze-500/50 bg-obsidian text-bronze-400 font-mono text-xs sm:text-sm shrink-0">2</div>
-                                <div>
+                                <div class="min-w-0">
                                     <h4 class="font-bold text-white mb-1 text-sm sm:text-base">HKDF Derivation</h4>
                                     <p class="text-xs sm:text-sm text-gray-400">The shared secret is expanded into independent send and receive hash chains using HKDF-SHA256.</p>
                                 </div>
                             </div>
                             <div class="flex gap-3 sm:gap-4">
                                 <div class="flex items-center justify-center w-8 h-8 sm:w-10 sm:h-10 rounded-full border border-gold-600/50 bg-obsidian text-gold-500 font-mono text-xs sm:text-sm shrink-0">3</div>
-                                <div>
+                                <div class="min-w-0">
                                     <h4 class="font-bold text-white mb-1 text-sm sm:text-base">AES-GCM & Hash Ratchet</h4>
                                     <p class="text-xs sm:text-sm text-gray-400">Each message uses a fresh key from the ratchet, encrypts the padded payload with AES-GCM, and immediately advances the chain.</p>
                                 </div>
                             </div>
                             <div class="flex gap-3 sm:gap-4">
                                 <div class="flex items-center justify-center w-8 h-8 sm:w-10 sm:h-10 rounded-full border border-yellow-600/50 bg-obsidian text-yellow-500 font-mono text-xs sm:text-sm shrink-0">4</div>
-                                <div>
+                                <div class="min-w-0">
                                     <h4 class="font-bold text-white mb-1 text-sm sm:text-base">Ed25519 Signatures</h4>
                                     <p class="text-xs sm:text-sm text-gray-400">Every control frame and message is signed with your long-term identity key to prevent tampering.</p>
                                 </div>
@@ -517,34 +427,50 @@
                         </div>
                     </div>
 
-                    <div class="reveal w-full" style="transition-delay: 0.2s;">
+                    <div class="reveal w-full min-w-0" style="transition-delay: 0.2s;">
                         <div class="terminal-window">
-                            <div class="bg-[#14110f] px-4 py-2 sm:py-3 border-b border-white/5 flex items-center justify-between">
-                                <span class="text-[10px] sm:text-xs text-gray-500 font-mono">tui.py</span>
-                                <span class="text-[9px] sm:text-[10px] text-gold-400 border border-gold-500/30 px-1.5 py-0.5 rounded font-mono">SECURE PAYLOAD</span>
+                            <div class="bg-[#14110f] px-4 py-2 sm:py-3 border-b border-white/5 flex items-center justify-between gap-2">
+                                <span class="text-[10px] sm:text-xs text-gray-500 font-mono truncate">tui.py</span>
+                                <span class="text-[9px] sm:text-[10px] text-gold-400 border border-gold-500/30 px-1.5 py-0.5 rounded font-mono shrink-0">SECURE PAYLOAD</span>
                             </div>
-                            <pre class="p-4 sm:p-6 text-[10px] sm:text-xs md:text-sm leading-relaxed overflow-x-auto text-gray-300"><code><span class="code-keyword">async def</span> <span class="text-bronze-400">send_chat_message</span>(self, text):
-    <span class="code-comment"># Derive one-time key</span>
-    msg_key = chain_message_key(send_chain)
-    
-    <span class="code-comment"># Pad to 256-byte block</span>
-    padded = pad_message(text.encode())
-    
-    <span class="code-comment"># Encrypt with AES-GCM</span>
-    nonce = os.urandom(<span class="code-number">12</span>)
-    ct = aes_gcm_encrypt(msg_key, padded, nonce, aad)
-    
-    <span class="code-comment"># Sign the frame</span>
-    sig = sign_bytes(self.ed_private, signed_data)
-    
-    <span class="code-comment"># Advance forward secrecy ratchet</span>
-    new_chain = chain_advance(send_chain)
-    
-    <span class="code-keyword">return</span> {
-        <span class="code-string">"nonce"</span>: base64.b64encode(nonce),
-        <span class="code-string">"ciphertext"</span>: base64.b64encode(ct),
-        <span class="code-string">"signature"</span>: base64.b64encode(sig)
-    }</code></pre>
+<pre class="p-3 sm:p-5 text-[10px] sm:text-xs leading-relaxed text-gray-300"><code><span class="code-keyword">async def</span> <span class="text-bronze-400">send_chat_message</span>(
+    self, contact_name, text,
+    reply_to=<span class="code-number">0</span>, react_to=<span class="code-number">0</span>
+):
+    <span class="code-keyword">async with</span> self._get_contact_lock(contact_name):
+        contact = self.db.get_contact(contact_name)
+        <span class="code-comment"># ... validations ...</span>
+
+        send_chain_hex = contact.get(
+            <span class="code-string">"send_chain_key_hex"</span>, <span class="code-string">""</span>
+        )
+        send_chain = bytes.fromhex(send_chain_hex)
+        counter = contact.get(
+            <span class="code-string">"send_counter"</span>, <span class="code-number">0</span>
+        ) + <span class="code-number">1</span>
+
+        msg_key = chain_message_key(send_chain)
+        padded = pad_message(text.encode(<span class="code-string">"utf-8"</span>))
+        nonce = os.urandom(<span class="code-number">12</span>)
+        aad = f<span class="code-string">"{self.user_name}:{counter}"</span>.encode(<span class="code-string">"utf-8"</span>)
+        ct = aes_gcm_encrypt(
+            msg_key, padded, nonce, aad
+        )
+
+        signed_data = (
+            self.user_name.encode(<span class="code-string">"utf-8"</span>)
+            + counter.to_bytes(<span class="code-number">8</span>, <span class="code-string">"big"</span>)
+            + nonce + ct
+        )
+        sig = sign_bytes(self.ed_private, signed_data)
+        new_chain = chain_advance(send_chain)
+
+        <span class="code-comment"># Update DB state, then send via TCP</span>
+        self.db.set_contact_state(
+            contact_name,
+            send_chain_key_hex=new_chain.hex(),
+            send_counter=counter
+        )</code></pre>
                         </div>
                     </div>
                 </div>
@@ -554,73 +480,51 @@
         <section id="features" class="py-16 sm:py-24 bg-surface border-t border-white/5 relative">
             <div class="max-w-7xl mx-auto px-4 sm:px-6">
                 <div class="text-center mb-12 sm:mb-16 reveal">
-                    <h2 class="text-2xl sm:text-3xl md:text-4xl font-bold tracking-tight mb-4">
-                        Engineered for <span class="text-gradient-gold">Privacy.</span>
-                    </h2>
-                    <p class="text-sm sm:text-base text-gray-400 font-light max-w-2xl mx-auto">
-                        A complete suite of security features designed for hostile network environments.
-                    </p>
+                    <h2 class="text-2xl sm:text-3xl md:text-4xl font-bold tracking-tight mb-4">Engineered for <span class="text-gradient-gold">Privacy.</span></h2>
+                    <p class="text-sm sm:text-base text-gray-400 font-light max-w-2xl mx-auto">A complete suite of security features designed for hostile network environments.</p>
                 </div>
-
                 <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
                     <div class="glass-card p-6 sm:p-8 rounded-xl reveal">
                         <h3 class="text-base sm:text-lg font-bold mb-2 flex items-center gap-2 text-white">
                             <svg class="w-5 h-5 text-gold-400 shrink-0" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M8 9l3 3-3 3m5 0h3M5 20h14a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
                             Terminal Native
                         </h3>
-                        <p class="text-xs sm:text-sm text-gray-400 leading-relaxed">
-                            Built with Python and Textual. No web views, no Electron. A highly responsive, keyboard-driven interface.
-                        </p>
+                        <p class="text-xs sm:text-sm text-gray-400 leading-relaxed">Built with Python and Textual. No web views, no Electron. A highly responsive, keyboard-driven interface.</p>
                     </div>
-
                     <div class="glass-card p-6 sm:p-8 rounded-xl reveal" style="transition-delay: 0.1s;">
                         <h3 class="text-base sm:text-lg font-bold mb-2 flex items-center gap-2 text-white">
                             <svg class="w-5 h-5 text-gold-400 shrink-0" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
                             PIN Lockout
                         </h3>
-                        <p class="text-xs sm:text-sm text-gray-400 leading-relaxed">
-                            Brute-forcing the vault is impractical. 5 failed attempts trigger a 30-second lockout. 50 attempts trigger a 24-hour lockout.
-                        </p>
+                        <p class="text-xs sm:text-sm text-gray-400 leading-relaxed">Brute-forcing the vault is impractical. 5 failed attempts trigger a 30-second lockout. 50 attempts trigger a 24-hour lockout.</p>
                     </div>
-
                     <div class="glass-card p-6 sm:p-8 rounded-xl reveal" style="transition-delay: 0.2s;">
                         <h3 class="text-base sm:text-lg font-bold mb-2 flex items-center gap-2 text-white">
                             <svg class="w-5 h-5 text-gold-400 shrink-0" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
                             Audit Log
                         </h3>
-                        <p class="text-xs sm:text-sm text-gray-400 leading-relaxed">
-                            Security events are chained with HMAC-SHA256. The database cannot be silently modified without breaking the cryptographic chain.
-                        </p>
+                        <p class="text-xs sm:text-sm text-gray-400 leading-relaxed">Security events are chained with HMAC-SHA256. The database cannot be silently modified without breaking the cryptographic chain.</p>
                     </div>
-
                     <div class="glass-card p-6 sm:p-8 rounded-xl reveal">
                         <h3 class="text-base sm:text-lg font-bold mb-2 flex items-center gap-2 text-white">
                             <svg class="w-5 h-5 text-gold-400 shrink-0" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M8.111 16.404a5.5 5.5 0 017.778 0M12 20h.01m-7.08-7.071c3.904-3.905 10.236-3.905 14.141 0M1.394 9.393c5.857-5.857 15.355-5.857 21.213 0"/></svg>
                             Auto Discovery
                         </h3>
-                        <p class="text-xs sm:text-sm text-gray-400 leading-relaxed">
-                            UDP broadcast finds peers instantly. No need to manually configure IP addresses for peers on the same subnet.
-                        </p>
+                        <p class="text-xs sm:text-sm text-gray-400 leading-relaxed">UDP broadcast finds peers instantly. No need to manually configure IP addresses for peers on the same subnet.</p>
                     </div>
-
                     <div class="glass-card p-6 sm:p-8 rounded-xl reveal" style="transition-delay: 0.1s;">
                         <h3 class="text-base sm:text-lg font-bold mb-2 flex items-center gap-2 text-white">
                             <svg class="w-5 h-5 text-gold-400 shrink-0" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
                             Safety Numbers
                         </h3>
-                        <p class="text-xs sm:text-sm text-gray-400 leading-relaxed">
-                            Compare a 60-digit fingerprint out-of-band to verify your contact's identity and prevent man-in-the-middle attacks.
-                        </p>
+                        <p class="text-xs sm:text-sm text-gray-400 leading-relaxed">Compare a 60-digit fingerprint out-of-band to verify your contact's identity and prevent man-in-the-middle attacks.</p>
                     </div>
-
                     <div class="glass-card p-6 sm:p-8 rounded-xl reveal" style="transition-delay: 0.2s;">
                         <h3 class="text-base sm:text-lg font-bold mb-2 flex items-center gap-2 text-white">
                             <svg class="w-5 h-5 text-gold-400 shrink-0" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
                             Secure Deletion
                         </h3>
-                        <p class="text-xs sm:text-sm text-gray-400 leading-relaxed">
-                            SQLite PRAGMA secure_delete is enabled. Symmetric keys are zeroed out in memory upon app lock or termination.
-                        </p>
+                        <p class="text-xs sm:text-sm text-gray-400 leading-relaxed">SQLite PRAGMA secure_delete is enabled. Symmetric keys are zeroed out in memory upon app lock or termination.</p>
                     </div>
                 </div>
             </div>
@@ -629,13 +533,10 @@
         <section id="faq" class="py-16 sm:py-24 relative bg-obsidian">
             <div class="max-w-5xl mx-auto px-4 sm:px-6">
                 <div class="text-center mb-12 sm:mb-16 reveal">
-                    <h2 class="text-3xl sm:text-4xl md:text-5xl font-bold tracking-tight mb-4">
-                        Deep Dive <span class="text-gradient-gold">FAQ</span>
-                    </h2>
+                    <h2 class="text-3xl sm:text-4xl md:text-5xl font-bold tracking-tight mb-4">Deep Dive <span class="text-gradient-gold">FAQ</span></h2>
                     <p class="text-sm sm:text-base text-gray-400 font-light">Everything you need to know about LANMess. Mined directly from the source code.</p>
                 </div>
 
-                <!-- FAQ Category 1: Setup & Vault -->
                 <div class="mb-10">
                     <h3 class="text-xl sm:text-2xl font-bold text-gold-400 mb-6 border-b border-gold-500/20 pb-2">1. App Setup & The Vault</h3>
                     <div class="space-y-3 sm:space-y-4">
@@ -648,7 +549,6 @@
                                 The Group Code is used to derive the initial shared network key using <code>PBKDF2-HMAC-SHA256</code> with 600,000 iterations. This ensures that only users who know the Group Code can generate the same discovery tags and securely format their packets. It acts as a shared secret for the local network group.
                             </div>
                         </details>
-
                         <details class="glass-card rounded-xl group">
                             <summary class="flex items-center justify-between p-4 sm:p-6">
                                 <h4 class="text-sm sm:text-base font-bold text-gray-200 group-hover:text-gold-300 transition-colors">Why must my PIN be at least 12 characters long?</h4>
@@ -658,7 +558,6 @@
                                 Your PIN unlocks the local vault (which contains your private keys). The config enforces <code>PIN_MIN_LEN = 12</code> and requires at least 3 of: lowercase, uppercase, digit, symbol. A weak PIN makes the Argon2id encryption vulnerable to offline brute-forcing if your device is stolen.
                             </div>
                         </details>
-
                         <details class="glass-card rounded-xl group">
                             <summary class="flex items-center justify-between p-4 sm:p-6">
                                 <h4 class="text-sm sm:text-base font-bold text-gray-200 group-hover:text-gold-300 transition-colors">What encryption is used for my local database?</h4>
@@ -668,7 +567,6 @@
                                 Your SQLite database (<code>~/.lanmess/lanmess.db</code>) is fully encrypted. Every piece of data (identity, contacts, messages) is encrypted using <code>AES-GCM</code>. The master key for this data is wrapped using <code>Argon2id</code> (derived from your PIN) and stored in the vault table.
                             </div>
                         </details>
-
                         <details class="glass-card rounded-xl group">
                             <summary class="flex items-center justify-between p-4 sm:p-6">
                                 <h4 class="text-sm sm:text-base font-bold text-gray-200 group-hover:text-gold-300 transition-colors">What happens if I fail my PIN multiple times?</h4>
@@ -686,7 +584,6 @@
                     </div>
                 </div>
 
-                <!-- FAQ Category 2: Networking & Discovery -->
                 <div class="mb-10">
                     <h3 class="text-xl sm:text-2xl font-bold text-gold-400 mb-6 border-b border-gold-500/20 pb-2">2. Networking & Discovery</h3>
                     <div class="space-y-3 sm:space-y-4">
@@ -699,7 +596,6 @@
                                 Yes. LANMess operates on Layer 3 using UDP (port 50505) and TCP (ports 50510-50600). As long as your VPN creates a virtual LAN (Layer 2/3) where broadcast packets or direct IP routing can reach the peers, LANMess will function perfectly. You may need to use the "Add by IP" feature if UDP broadcast doesn't traverse the VPN.
                             </div>
                         </details>
-
                         <details class="glass-card rounded-xl group">
                             <summary class="flex items-center justify-between p-4 sm:p-6">
                                 <h4 class="text-sm sm:text-base font-bold text-gray-200 group-hover:text-gold-300 transition-colors">What happens if my peer's IP address changes?</h4>
@@ -709,7 +605,6 @@
                                 The UDP discovery mechanism automatically updates peer IP addresses every 2 seconds (<code>DISCOVERY_INTERVAL</code>). However, if you added the contact using "Add by IP", the contact is marked as <code>pinned</code>. Pinned contacts will <i>not</i> automatically update their IP. If the IP changes, you will have to re-add them manually.
                             </div>
                         </details>
-
                         <details class="glass-card rounded-xl group">
                             <summary class="flex items-center justify-between p-4 sm:p-6">
                                 <h4 class="text-sm sm:text-base font-bold text-gray-200 group-hover:text-gold-300 transition-colors">How does the 8-digit "Add Code" work?</h4>
@@ -719,7 +614,6 @@
                                 The 8-digit code is a <code>TOTP</code> (Time-Based One-Time Password) generated every 60 seconds (<code>LOGIN_CODE_PERIOD = 60</code>). When peer A wants to add peer B, A enters B's TOTP code. The code is verified using HMAC-SHA256 against the timestamp, proving that A and B share the same local network and that A knows B's current code. It prevents random scanning attacks.
                             </div>
                         </details>
-
                         <details class="glass-card rounded-xl group">
                             <summary class="flex items-center justify-between p-4 sm:p-6">
                                 <h4 class="text-sm sm:text-base font-bold text-gray-200 group-hover:text-gold-300 transition-colors">What ports do I need to open in my firewall?</h4>
@@ -735,7 +629,6 @@
                     </div>
                 </div>
 
-                <!-- FAQ Category 3: Cryptography & Security -->
                 <div class="mb-10">
                     <h3 class="text-xl sm:text-2xl font-bold text-gold-400 mb-6 border-b border-gold-500/20 pb-2">3. Cryptography & Security</h3>
                     <div class="space-y-3 sm:space-y-4">
@@ -748,7 +641,6 @@
                                 Safety numbers are a 60-digit fingerprint generated by hashing both your Ed25519 public key and your peer's Ed25519 public key. You must compare this number with your peer over a secure out-of-band channel (e.g., in person, or via a trusted phone call). If the numbers match, you are mathematically guaranteed that no Man-In-The-Middle (MITM) is intercepting your keys.
                             </div>
                         </details>
-
                         <details class="glass-card rounded-xl group">
                             <summary class="flex items-center justify-between p-4 sm:p-6">
                                 <h4 class="text-sm sm:text-base font-bold text-gray-200 group-hover:text-gold-300 transition-colors">How does the "Forward Secrecy" hash ratchet work?</h4>
@@ -758,7 +650,6 @@
                                 For every message sent or received, the symmetric encryption key is destroyed and replaced. The next key is generated by hashing the current key using HMAC-SHA256 (<code>chain_advance</code>). This means if an attacker steals your current key, they cannot decrypt any past messages, because the old keys were permanently deleted from memory.
                             </div>
                         </details>
-
                         <details class="glass-card rounded-xl group">
                             <summary class="flex items-center justify-between p-4 sm:p-6">
                                 <h4 class="text-sm sm:text-base font-bold text-gray-200 group-hover:text-gold-300 transition-colors">What does "Verified-only" mode do?</h4>
@@ -768,7 +659,6 @@
                                 When enabled in the Menu (<code>m-vonl</code>), LANMess will actively block any chat requests or messages from contacts that have not been explicitly marked as "verified" (where you've compared safety numbers). It is a strict zero-trust policy.
                             </div>
                         </details>
-
                         <details class="glass-card rounded-xl group">
                             <summary class="flex items-center justify-between p-4 sm:p-6">
                                 <h4 class="text-sm sm:text-base font-bold text-gray-200 group-hover:text-gold-300 transition-colors">What happens if a message signature fails to verify?</h4>
@@ -778,7 +668,6 @@
                                 If an incoming message fails Ed25519 signature verification, or if the AES-GCM decryption fails (indicating tampering), LANMess immediately blocks the contact. It assumes an active attack and shuts down communication with that peer to protect you. The event is logged in the Audit Log.
                             </div>
                         </details>
-                        
                         <details class="glass-card rounded-xl group">
                             <summary class="flex items-center justify-between p-4 sm:p-6">
                                 <h4 class="text-sm sm:text-base font-bold text-gray-200 group-hover:text-gold-300 transition-colors">How does replay protection work?</h4>
@@ -791,7 +680,6 @@
                     </div>
                 </div>
 
-                <!-- FAQ Category 4: TUI & Commands -->
                 <div class="mb-10">
                     <h3 class="text-xl sm:text-2xl font-bold text-gold-400 mb-6 border-b border-gold-500/20 pb-2">4. TUI Interface & Commands</h3>
                     <div class="space-y-3 sm:space-y-4">
@@ -805,7 +693,6 @@
                                 <strong>/clearall</strong> sends a <code>CLEAR_REQUEST</code> to the peer. If the peer accepts, <i>both</i> sides wipe the conversation from their local databases. It requires a mutual agreement to prevent data loss.
                             </div>
                         </details>
-
                         <details class="glass-card rounded-xl group">
                             <summary class="flex items-center justify-between p-4 sm:p-6">
                                 <h4 class="text-sm sm:text-base font-bold text-gray-200 group-hover:text-gold-300 transition-colors">How do I completely reset LANMess?</h4>
@@ -815,7 +702,6 @@
                                 You can press <code>Ctrl+R</code> or open the Menu and select "Reset everything". This drops all tables (identity, contacts, messages, vault), performs a database VACUUM, and zeroes out the cryptographic keys in memory. It is irreversible.
                             </div>
                         </details>
-
                         <details class="glass-card rounded-xl group">
                             <summary class="flex items-center justify-between p-4 sm:p-6">
                                 <h4 class="text-sm sm:text-base font-bold text-gray-200 group-hover:text-gold-300 transition-colors">What do the contact statuses mean?</h4>
@@ -830,7 +716,6 @@
                                 - <strong>[legacy]</strong>: <code>chat_started</code> is true, but <code>session_established</code> is false. The chat started, but the secure session dropped (e.g., app crashed or network loss). Press 'S' to restart the handshake.
                             </div>
                         </details>
-
                         <details class="glass-card rounded-xl group">
                             <summary class="flex items-center justify-between p-4 sm:p-6">
                                 <h4 class="text-sm sm:text-base font-bold text-gray-200 group-hover:text-gold-300 transition-colors">What is the maximum message length I can send?</h4>
@@ -840,7 +725,6 @@
                                 The maximum message length is 8,192 characters (<code>MAX_MESSAGE_LEN = 8192</code>). If you try to send a longer message, LANMess will prevent it to avoid overwhelming the frame size limit.
                             </div>
                         </details>
-
                         <details class="glass-card rounded-xl group">
                             <summary class="flex items-center justify-between p-4 sm:p-6">
                                 <h4 class="text-sm sm:text-base font-bold text-gray-200 group-hover:text-gold-300 transition-colors">How do I accept a chat request or clear request?</h4>
@@ -853,7 +737,6 @@
                     </div>
                 </div>
 
-                <!-- FAQ Category 5: Troubleshooting -->
                 <div>
                     <h3 class="text-xl sm:text-2xl font-bold text-gold-400 mb-6 border-b border-gold-500/20 pb-2">5. Troubleshooting</h3>
                     <div class="space-y-3 sm:space-y-4">
@@ -870,7 +753,6 @@
                                 - You are no longer on the same LAN.
                             </div>
                         </details>
-
                         <details class="glass-card rounded-xl group">
                             <summary class="flex items-center justify-between p-4 sm:p-6">
                                 <h4 class="text-sm sm:text-base font-bold text-gray-200 group-hover:text-gold-300 transition-colors">Why is my peer showing as offline?</h4>
@@ -880,7 +762,6 @@
                                 LANMess uses a presence system that pings every 3 seconds (<code>PRESENCE_INTERVAL</code>). If no response is received within 15 seconds (<code>ONLINE_WINDOW</code>), the peer is marked offline. Check if UDP port 50505 is open, or if they paused their presence in the menu.
                             </div>
                         </details>
-
                         <details class="glass-card rounded-xl group">
                             <summary class="flex items-center justify-between p-4 sm:p-6">
                                 <h4 class="text-sm sm:text-base font-bold text-gray-200 group-hover:text-gold-300 transition-colors">Why did I get blocked by a contact?</h4>
@@ -890,7 +771,6 @@
                                 If the app detects a signature failure, decryption failure, or severe replay attempt from your IP, it automatically blocks you and prevents further communication. This only happens if the cryptographic integrity of the session is compromised.
                             </div>
                         </details>
-
                         <details class="glass-card rounded-xl group">
                             <summary class="flex items-center justify-between p-4 sm:p-6">
                                 <h4 class="text-sm sm:text-base font-bold text-gray-200 group-hover:text-gold-300 transition-colors">What does the "Audit Log" warning mean?</h4>
@@ -902,20 +782,13 @@
                         </details>
                     </div>
                 </div>
-
             </div>
         </section>
 
         <section id="install" class="py-16 sm:py-24 bg-surface border-t border-white/5 relative">
             <div class="max-w-4xl mx-auto px-4 sm:px-6 text-center reveal">
-                <h2 class="text-2xl sm:text-4xl md:text-5xl font-black tracking-tight mb-4 sm:mb-6">
-                    Take back <span class="text-gradient-gold">control.</span>
-                </h2>
-                <p class="text-sm sm:text-lg text-gray-400 mb-8 sm:mb-12 font-light">
-                    No accounts. No subscriptions. No telemetry. <br class="hidden sm:inline">
-                    Requires Python 3.9+ on Windows, macOS, or Linux.
-                </p>
-
+                <h2 class="text-2xl sm:text-4xl md:text-5xl font-black tracking-tight mb-4 sm:mb-6">Take back <span class="text-gradient-gold">control.</span></h2>
+                <p class="text-sm sm:text-lg text-gray-400 mb-8 sm:mb-12 font-light">No accounts. No subscriptions. No telemetry. <br class="hidden sm:inline">Requires Python 3.9+ on Windows, macOS, or Linux.</p>
                 <div class="relative max-w-lg mx-auto group mb-8 sm:mb-12">
                     <div class="absolute -inset-1 bg-gradient-to-r from-gold-500 to-bronze-600 rounded-xl sm:rounded-2xl blur-lg opacity-30 group-hover:opacity-60 transition-opacity duration-500"></div>
                     <div class="relative bg-[#0a0908] border border-white/10 rounded-xl sm:rounded-2xl p-4 sm:p-6 flex flex-col sm:flex-row items-center justify-between gap-3 sm:gap-4">
@@ -928,7 +801,6 @@
                         </button>
                     </div>
                 </div>
-
                 <div class="flex flex-col sm:flex-row justify-center gap-3 sm:gap-4">
                     <a href="https://github.com/virensahti-nl/lanmess/releases/latest" target="_blank" rel="noopener" class="btn-gold px-6 sm:px-8 py-3 sm:py-4 rounded-xl text-sm sm:text-base font-bold flex items-center justify-center gap-2">
                         <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
@@ -940,32 +812,33 @@
 
     </main>
 
-    <footer class="border-t border-white/5 bg-[#050403] py-8 sm:py-12 relative z-10">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 flex flex-col md:flex-row items-center justify-between gap-4 sm:gap-6">
-            <div class="flex items-center">
-                <span class="font-black text-lg text-white">LANMess</span>
+    <!-- PERFECT ENDING FOOTER -->
+    <footer class="border-t border-white/5 bg-[#050403] w-full relative z-10 mt-auto">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 py-8 sm:py-10">
+            <div class="flex flex-col sm:flex-row items-center justify-between gap-6">
+                <div class="flex items-center">
+                    <span class="font-black text-xl text-white tracking-tighter">LANMess</span>
+                </div>
+                
+                <nav class="flex flex-wrap items-center justify-center gap-4 sm:gap-8 text-xs sm:text-sm text-gray-500">
+                    <a href="https://github.com/virensahti-nl/lanmess" target="_blank" class="hover:text-gold-400 transition-colors">GitHub</a>
+                    <a href="https://github.com/virensahti-nl/lanmess/releases" target="_blank" class="hover:text-gold-400 transition-colors">Releases</a>
+                    <a href="https://github.com/virensahti-nl/lanmess/blob/main/LICENSE" target="_blank" class="hover:text-gold-400 transition-colors">MIT License</a>
+                </nav>
             </div>
             
-            <nav class="flex gap-4 sm:gap-8 text-xs sm:text-sm text-gray-500">
-                <a href="https://github.com/virensahti-nl/lanmess" target="_blank" class="hover:text-gold-400 transition-colors">GitHub</a>
-                <a href="https://github.com/virensahti-nl/lanmess/releases" target="_blank" class="hover:text-gold-400 transition-colors">Releases</a>
-                <a href="https://github.com/virensahti-nl/lanmess/blob/main/LICENSE" target="_blank" class="hover:text-gold-400 transition-colors">MIT License</a>
-            </nav>
-
-            <div class="text-[10px] sm:text-xs text-gray-600 font-mono text-center md:text-right">
-                LOCAL NETWORK ONLY. NO CLOUD. NO TRACKERS.
+            <div class="mt-6 pt-6 border-t border-white/5 text-center">
+                <span class="text-[10px] sm:text-xs text-gray-600 font-mono tracking-wider">
+                    LOCAL NETWORK ONLY · NO CLOUD · NO TRACKERS
+                </span>
             </div>
         </div>
     </footer>
 
     <script>
-        const observerOptions = {
-            root: null,
-            rootMargin: '0px',
-            threshold: 0.1
-        };
-
-        const observer = new IntersectionObserver((entries, observer) => {
+        // Scroll Reveal
+        const observerOptions = { root: null, rootMargin: '0px', threshold: 0.1 };
+        const observer = new IntersectionObserver((entries) => {
             entries.forEach(entry => {
                 if (entry.isIntersecting) {
                     entry.target.classList.add('active');
@@ -973,21 +846,15 @@
                 }
             });
         }, observerOptions);
+        
+        document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
 
-        document.querySelectorAll('.reveal').forEach(el => {
-            observer.observe(el);
-        });
-
+        // Smooth Scroll
         document.querySelectorAll('a[href^="#"]').forEach(anchor => {
             anchor.addEventListener('click', function (e) {
                 e.preventDefault();
                 const target = document.querySelector(this.getAttribute('href'));
-                if (target) {
-                    target.scrollIntoView({
-                        behavior: 'smooth',
-                        block: 'start'
-                    });
-                }
+                if (target) target.scrollIntoView({ behavior: 'smooth', block: 'start' });
             });
         });
     </script>
