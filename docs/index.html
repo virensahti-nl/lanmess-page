@@ -167,6 +167,27 @@
             box-shadow: 0 0 20px rgba(245, 158, 11, 0.2);
         }
 
+        /* Tab Styling */
+        .tab-btn {
+            transition: all 0.3s ease;
+            border: 1px solid transparent;
+        }
+        .tab-btn.active {
+            background: #f59e0b;
+            color: #0a0908;
+            border-color: #fbbf24;
+            box-shadow: 0 0 15px rgba(245, 158, 11, 0.3);
+        }
+        .tab-btn:not(.active) {
+            background: rgba(20, 17, 15, 0.6);
+            color: #a8a29e;
+            border-color: rgba(255, 255, 255, 0.1);
+        }
+        .tab-btn:not(.active):hover {
+            background: rgba(255, 255, 255, 0.05);
+            color: #fcd34d;
+        }
+
         details > summary { list-style: none; cursor: pointer; }
         details > summary::-webkit-details-marker { display: none; }
         details[open] .chevron { transform: rotate(180deg); }
@@ -209,7 +230,6 @@
     <header class="fixed top-0 w-full z-50 border-b border-white/5 bg-obsidian/80 backdrop-blur-md">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 h-16 sm:h-20 flex items-center justify-between">
             
-            <!-- FIXED LOGO (Added flex-shrink-0, inline-block, and pr-1) -->
             <a href="#" class="flex items-center group flex-shrink-0">
                 <span class="font-black text-2xl sm:text-3xl tracking-tighter text-transparent bg-clip-text bg-gradient-to-r from-white to-gray-400 group-hover:from-gold-300 group-hover:to-gold-500 transition-all duration-300 inline-block pr-1">LANMess</span>
             </a>
@@ -787,26 +807,104 @@
             </div>
         </section>
 
+        <!-- REDESIGNED INSTALL SECTION -->
         <section id="install" class="py-16 sm:py-24 bg-surface border-t border-white/5 relative">
             <div class="max-w-4xl mx-auto px-4 sm:px-6 text-center reveal">
                 <h2 class="text-2xl sm:text-4xl md:text-5xl font-black tracking-tight mb-4 sm:mb-6">Take back <span class="text-gradient-gold inline-block pr-1">control.</span></h2>
-                <p class="text-sm sm:text-lg text-gray-400 mb-8 sm:mb-12 font-light">No accounts. No subscriptions. No telemetry. <br class="hidden sm:inline">Requires Python 3.9+ on Windows, macOS, or Linux.</p>
-                <div class="relative max-w-lg mx-auto group mb-8 sm:mb-12">
-                    <div class="absolute -inset-1 bg-gradient-to-r from-gold-500 to-bronze-600 rounded-xl sm:rounded-2xl blur-lg opacity-30 group-hover:opacity-60 transition-opacity duration-500"></div>
-                    <div class="relative bg-[#0a0908] border border-white/10 rounded-xl sm:rounded-2xl p-4 sm:p-6 flex flex-col sm:flex-row items-center justify-between gap-3 sm:gap-4">
-                        <div class="flex items-center gap-2 sm:gap-3 w-full sm:w-auto font-mono text-xs sm:text-base">
-                            <span class="text-gold-400">$</span>
-                            <span class="text-gray-200 select-all">pip install lanmess</span>
+                <p class="text-sm sm:text-lg text-gray-400 mb-8 sm:mb-10 font-light">No accounts. No subscriptions. No telemetry. <br class="hidden sm:inline">Choose your preferred installation method below.</p>
+                
+                <!-- Tabs for different OS/Install methods -->
+                <div class="flex flex-wrap justify-center gap-2 sm:gap-3 mb-6 sm:mb-8">
+                    <button class="tab-btn active px-4 sm:px-6 py-2 sm:py-2.5 rounded-lg text-xs sm:text-sm font-bold" data-target="pip">
+                        Pip (Python)
+                    </button>
+                    <button class="tab-btn px-4 sm:px-6 py-2 sm:py-2.5 rounded-lg text-xs sm:text-sm font-bold" data-target="win">
+                        Windows
+                    </button>
+                    <button class="tab-btn px-4 sm:px-6 py-2 sm:py-2.5 rounded-lg text-xs sm:text-sm font-bold" data-target="mac">
+                        macOS
+                    </button>
+                    <button class="tab-btn px-4 sm:px-6 py-2 sm:py-2.5 rounded-lg text-xs sm:text-sm font-bold" data-target="linux">
+                        Linux
+                    </button>
+                </div>
+
+                <!-- Tab Content Container -->
+                <div class="relative max-w-2xl mx-auto mb-6">
+                    <!-- PIP -->
+                    <div id="tab-pip" class="tab-panel block">
+                        <div class="relative group">
+                            <div class="absolute -inset-1 bg-gradient-to-r from-gold-500 to-bronze-600 rounded-xl sm:rounded-2xl blur-lg opacity-30 group-hover:opacity-60 transition-opacity duration-500"></div>
+                            <div class="relative bg-[#0a0908] border border-white/10 rounded-xl sm:rounded-2xl p-4 sm:p-6 flex flex-col sm:flex-row items-center justify-between gap-3 sm:gap-4 text-left">
+                                <div class="flex items-center gap-2 sm:gap-3 w-full sm:w-auto font-mono text-[11px] sm:text-base overflow-x-auto">
+                                    <span class="text-gold-400">$</span>
+                                    <span class="text-gray-200 select-all whitespace-nowrap">pip install lanmess</span>
+                                </div>
+                                <button onclick="navigator.clipboard.writeText('pip install lanmess'); this.textContent='COPIED'; setTimeout(()=>this.textContent='COPY', 2000)" class="w-full sm:w-auto px-5 py-2 text-xs font-bold rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 transition-all duration-300 text-gray-300 font-mono tracking-widest shrink-0">
+                                    COPY
+                                </button>
+                            </div>
                         </div>
-                        <button onclick="navigator.clipboard.writeText('pip install lanmess'); this.textContent='COPIED'; setTimeout(()=>this.textContent='COPY', 2000)" class="w-full sm:w-auto px-4 py-2 text-xs font-bold rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 transition-all duration-300 text-gray-300 font-mono tracking-widest">
-                            COPY
-                        </button>
+                    </div>
+
+                    <!-- WINDOWS -->
+                    <div id="tab-win" class="tab-panel hidden">
+                        <div class="relative group">
+                            <div class="absolute -inset-1 bg-gradient-to-r from-blue-500 to-cyan-600 rounded-xl sm:rounded-2xl blur-lg opacity-30 group-hover:opacity-60 transition-opacity duration-500"></div>
+                            <div class="relative bg-[#0a0908] border border-white/10 rounded-xl sm:rounded-2xl p-4 sm:p-6 flex flex-col sm:flex-row items-center justify-between gap-3 sm:gap-4 text-left">
+                                <div class="flex items-center gap-2 sm:gap-3 w-full sm:w-auto font-mono text-[11px] sm:text-sm overflow-x-auto">
+                                    <span class="text-gold-400">></span>
+                                    <span class="text-gray-200 select-all whitespace-nowrap">irm https://raw.githubusercontent.com/virensahti-nl/lanmess-install/main/windows.ps1 | iex</span>
+                                </div>
+                                <button onclick="navigator.clipboard.writeText('irm https://raw.githubusercontent.com/virensahti-nl/lanmess-install/main/windows.ps1 | iex'); this.textContent='COPIED'; setTimeout(()=>this.textContent='COPY', 2000)" class="w-full sm:w-auto px-5 py-2 text-xs font-bold rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 transition-all duration-300 text-gray-300 font-mono tracking-widest shrink-0">
+                                    COPY
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- MACOS -->
+                    <div id="tab-mac" class="tab-panel hidden">
+                        <div class="relative group">
+                            <div class="absolute -inset-1 bg-gradient-to-r from-gray-400 to-gray-600 rounded-xl sm:rounded-2xl blur-lg opacity-30 group-hover:opacity-60 transition-opacity duration-500"></div>
+                            <div class="relative bg-[#0a0908] border border-white/10 rounded-xl sm:rounded-2xl p-4 sm:p-6 flex flex-col sm:flex-row items-center justify-between gap-3 sm:gap-4 text-left">
+                                <div class="flex items-center gap-2 sm:gap-3 w-full sm:w-auto font-mono text-[11px] sm:text-sm overflow-x-auto">
+                                    <span class="text-gold-400">$</span>
+                                    <span class="text-gray-200 select-all whitespace-nowrap">curl -sSL https://raw.githubusercontent.com/virensahti-nl/lanmess-install/main/macos.sh | bash</span>
+                                </div>
+                                <button onclick="navigator.clipboard.writeText('curl -sSL https://raw.githubusercontent.com/virensahti-nl/lanmess-install/main/macos.zsh | bash'); this.textContent='COPIED'; setTimeout(()=>this.textContent='COPY', 2000)" class="w-full sm:w-auto px-5 py-2 text-xs font-bold rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 transition-all duration-300 text-gray-300 font-mono tracking-widest shrink-0">
+                                    COPY
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- LINUX -->
+                    <div id="tab-linux" class="tab-panel hidden">
+                        <div class="relative group">
+                            <div class="absolute -inset-1 bg-gradient-to-r from-orange-500 to-yellow-600 rounded-xl sm:rounded-2xl blur-lg opacity-30 group-hover:opacity-60 transition-opacity duration-500"></div>
+                            <div class="relative bg-[#0a0908] border border-white/10 rounded-xl sm:rounded-2xl p-4 sm:p-6 flex flex-col sm:flex-row items-center justify-between gap-3 sm:gap-4 text-left">
+                                <div class="flex items-center gap-2 sm:gap-3 w-full sm:w-auto font-mono text-[11px] sm:text-sm overflow-x-auto">
+                                    <span class="text-gold-400">$</span>
+                                    <span class="text-gray-200 select-all whitespace-nowrap">curl -sSL https://raw.githubusercontent.com/virensahti-nl/lanmess-install/main/linux.sh | bash</span>
+                                </div>
+                                <button onclick="navigator.clipboard.writeText('curl -sSL https://raw.githubusercontent.com/virensahti-nl/lanmess-install/main/linux.sh | bash'); this.textContent='COPIED'; setTimeout(()=>this.textContent='COPY', 2000)" class="w-full sm:w-auto px-5 py-2 text-xs font-bold rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 transition-all duration-300 text-gray-300 font-mono tracking-widest shrink-0">
+                                    COPY
+                                </button>
+                            </div>
+                        </div>
                     </div>
                 </div>
+                
+                <!-- Security Note -->
+                <p class="text-[10px] sm:text-xs text-gray-500 font-mono mb-10 max-w-md mx-auto">
+                    <em>Security tip: Always review shell scripts before piping them to <code>bash</code> or <code>iex</code>. The scripts are open-source on our <a href="https://github.com/virensahti-nl/lanmess-install" target="_blank" class="text-gold-400 hover:underline">install repository</a>.</em>
+                </p>
+
                 <div class="flex flex-col sm:flex-row justify-center gap-3 sm:gap-4">
                     <a href="https://github.com/virensahti-nl/lanmess/releases/latest" target="_blank" rel="noopener" class="btn-gold px-6 sm:px-8 py-3 sm:py-4 rounded-xl text-sm sm:text-base font-bold flex items-center justify-center gap-2">
                         <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
-                        Download Latest Release
+                        Download Standalone Binary
                     </a>
                 </div>
             </div>
@@ -857,6 +955,29 @@
                 e.preventDefault();
                 const target = document.querySelector(this.getAttribute('href'));
                 if (target) target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            });
+        });
+
+        // Tab switching logic
+        document.querySelectorAll('.tab-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                // Remove active class from all
+                document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+                // Add to clicked
+                btn.classList.add('active');
+
+                // Hide all panels
+                document.querySelectorAll('.tab-panel').forEach(p => {
+                    p.classList.add('hidden');
+                    p.classList.remove('block');
+                });
+                
+                // Show target panel
+                const target = document.getElementById('tab-' + btn.dataset.target);
+                if (target) {
+                    target.classList.remove('hidden');
+                    target.classList.add('block');
+                }
             });
         });
     </script>
