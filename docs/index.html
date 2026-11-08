@@ -3,829 +3,993 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>LANMess — Encrypted LAN Messenger & TUI</title>
-    <meta name="description" content="A LAN-only, end-to-end encrypted messenger with a powerful Terminal User Interface. No cloud. No internet. Just your network.">
-    <link rel="icon" type="image/png" href="LANMess.png">
+    <title>LANMess — Local Encrypted Terminal Messenger</title>
+    <meta name="description" content="A LAN-native, end-to-end encrypted terminal messenger. No cloud, no internet, zero telemetry. Built with X25519, AES-GCM, and Argon2id.">
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
         tailwind.config = {
             theme: {
                 extend: {
                     colors: {
-                        brand: {
-                            50: '#eff6ff', 100: '#dbeafe', 200: '#bfdbfe',
-                            300: '#93c5fd', 400: '#60a5fa', 500: '#3b82f6',
-                            600: '#2563eb', 700: '#1d4ed8', 800: '#1e40af',
-                            900: '#1e3a8a', 950: '#172554',
+                        obsidian: '#0a0908',
+                        surface: '#14110f',
+                        gold: {
+                            300: '#fcd34d',
+                            400: '#fbbf24',
+                            500: '#f59e0b',
+                            600: '#d97706',
+                            700: '#b45309',
+                        },
+                        bronze: {
+                            400: '#fb923c',
+                            500: '#f97316',
+                            600: '#ea580c',
+                            700: '#c2410c',
                         }
                     },
                     fontFamily: {
-                        sans: ['Inter', 'system-ui', 'sans-serif'],
-                        mono: ['JetBrains Mono', 'monospace'],
+                        sans: ['Outfit', 'system-ui', 'sans-serif'],
+                        mono: ['Fira Code', 'monospace'],
                     },
                     animation: {
-                        'float': 'float 6s ease-in-out infinite',
-                        'glow': 'glow 3s ease-in-out infinite',
-                        'shimmer': 'shimmer 3s linear infinite',
-                        'fade-up': 'fadeUp 0.8s ease-out forwards',
-                        'blink': 'blink 1s step-end infinite',
-                        'pulse-slow': 'pulse 4s cubic-bezier(0.4,0,0.6,1) infinite',
-                        'spin-slow': 'spin 20s linear infinite',
-                        'gradient-x': 'gradientX 6s ease infinite',
+                        'scan': 'scan 6s linear infinite',
+                        'float': 'float 8s ease-in-out infinite',
+                        'glow-pulse': 'glowPulse 4s ease-in-out infinite',
+                        'marquee': 'marquee 30s linear infinite',
                     },
                     keyframes: {
+                        scan: {
+                            '0%': { transform: 'translateY(-100%)' },
+                            '100%': { transform: 'translateY(100%)' },
+                        },
                         float: {
-                            '0%,100%': { transform: 'translateY(0)' },
-                            '50%': { transform: 'translateY(-20px)' },
+                            '0%, 100%': { transform: 'translateY(0)' },
+                            '50%': { transform: 'translateY(-12px)' },
                         },
-                        glow: {
-                            '0%,100%': { boxShadow: '0 0 30px rgba(96,165,250,.3)' },
-                            '50%': { boxShadow: '0 0 60px rgba(96,165,250,.6)' },
+                        glowPulse: {
+                            '0%, 100%': { opacity: '0.3', filter: 'blur(60px)' },
+                            '50%': { opacity: '0.6', filter: 'blur(80px)' },
                         },
-                        shimmer: {
-                            '0%': { backgroundPosition: '-200% 0' },
-                            '100%': { backgroundPosition: '200% 0' },
-                        },
-                        fadeUp: {
-                            '0%': { opacity: '0', transform: 'translateY(30px)' },
-                            '100%': { opacity: '1', transform: 'translateY(0)' },
-                        },
-                        blink: {
-                            '0%,100%': { opacity: '1' },
-                            '50%': { opacity: '0' },
-                        },
-                        gradientX: {
-                            '0%,100%': { backgroundPosition: '0% 50%' },
-                            '50%': { backgroundPosition: '100% 50%' },
-                        },
+                        marquee: {
+                            '0%': { transform: 'translateX(0%)' },
+                            '100%': { transform: 'translateX(-50%)' },
+                        }
                     }
                 }
             }
         }
     </script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&family=Fira+Code:wght@400;500;600&display=swap" rel="stylesheet">
+    
     <style>
         * { -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; }
-        html { scroll-behavior: smooth; }
-        body {
-            font-family: 'Inter', sans-serif;
-            background: #020617;
+        html { scroll-behavior: smooth; overflow-x: hidden; }
+        body { 
+            font-family: 'Outfit', sans-serif; 
+            background-color: #0a0908; 
+            color: #f5f5f4;
             overflow-x: hidden;
+            width: 100%;
+            position: relative;
         }
-        code, pre, .mono { font-family: 'JetBrains Mono', monospace; }
+        code, pre, .mono { font-family: 'Fira Code', monospace; }
 
-        /* Animated mesh background */
-        .mesh-bg {
-            position: fixed;
-            inset: 0;
-            z-index: -1;
-            overflow: hidden;
-            pointer-events: none;
-        }
-        .mesh-blob {
-            position: absolute;
-            border-radius: 50%;
-            filter: blur(120px);
-            opacity: 0.25;
-            animation: blobFloat 20s ease-in-out infinite;
-        }
-        .blob-1 { width: 600px; height: 600px; background: #2563eb; top: -200px; left: -200px; }
-        .blob-2 { width: 500px; height: 500px; background: #7c3aed; top: 40%; right: -200px; animation-delay: -7s; }
-        .blob-3 { width: 400px; height: 400px; background: #0891b2; bottom: -150px; left: 30%; animation-delay: -14s; }
-        @keyframes blobFloat {
-            0%,100% { transform: translate(0,0) scale(1); }
-            33% { transform: translate(60px,-40px) scale(1.1); }
-            66% { transform: translate(-40px,50px) scale(0.95); }
-        }
-
-        /* Grid overlay */
         .grid-overlay {
             position: fixed;
             inset: 0;
-            z-index: -1;
-            background-image:
-                linear-gradient(rgba(59,130,246,.04) 1px, transparent 1px),
-                linear-gradient(90deg, rgba(59,130,246,.04) 1px, transparent 1px);
-            background-size: 60px 60px;
-            mask-image: radial-gradient(ellipse at center, black 40%, transparent 80%);
+            z-index: 0;
+            background-image: 
+                linear-gradient(rgba(245, 158, 11, 0.03) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(245, 158, 11, 0.03) 1px, transparent 1px);
+            background-size: 40px 40px;
+            mask-image: radial-gradient(circle at center, black 10%, transparent 80%);
             pointer-events: none;
         }
 
-        /* Gradient text */
-        .gradient-text {
-            background: linear-gradient(120deg, #60a5fa, #a78bfa, #22d3ee, #60a5fa);
-            background-size: 300% 300%;
-            -webkit-background-clip: text;
-            background-clip: text;
-            -webkit-text-fill-color: transparent;
-            animation: gradientX 8s ease infinite;
+        .glow-blob {
+            position: absolute;
+            width: 400px;
+            height: 400px;
+            background: radial-gradient(circle, rgba(245, 158, 11, 0.12) 0%, transparent 70%);
+            border-radius: 50%;
+            z-index: 0;
+            pointer-events: none;
+            animation: glow-pulse 8s ease-in-out infinite;
         }
 
-        /* Scroll reveal */
+        @media (min-width: 768px) {
+            .glow-blob { width: 600px; height: 600px; }
+        }
+
+        .glass-card {
+            background: rgba(20, 17, 15, 0.7);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(245, 158, 11, 0.15);
+            transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .glass-card::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 2px;
+            background: linear-gradient(90deg, transparent, rgba(245, 158, 11, 0.8), transparent);
+            opacity: 0;
+            transition: opacity 0.4s ease;
+        }
+
+        .glass-card:hover {
+            border-color: rgba(245, 158, 11, 0.4);
+            transform: translateY(-4px);
+            box-shadow: 0 20px 40px -10px rgba(245, 158, 11, 0.15);
+        }
+
+        .glass-card:hover::before { opacity: 1; }
+
+        .terminal-window {
+            background: #0a0908;
+            border: 1px solid rgba(245, 158, 11, 0.3);
+            border-radius: 12px;
+            box-shadow: 0 0 40px rgba(245, 158, 11, 0.1), inset 0 0 20px rgba(245, 158, 11, 0.05);
+            position: relative;
+            overflow: hidden;
+            width: 100%;
+        }
+
+        .terminal-scan {
+            position: absolute;
+            left: 0; right: 0; height: 20px;
+            background: linear-gradient(to bottom, transparent, rgba(245, 158, 11, 0.08), transparent);
+            animation: scan 8s linear infinite;
+            z-index: 20;
+            pointer-events: none;
+        }
+
+        .text-gradient-gold {
+            background: linear-gradient(135deg, #fcd34d 0%, #f59e0b 50%, #b45309 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .text-gradient-bronze {
+            background: linear-gradient(135deg, #fbbf24 0%, #ea580c 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
         .reveal {
             opacity: 0;
-            transform: translateY(40px);
-            transition: opacity .9s cubic-bezier(.16,1,.3,1), transform .9s cubic-bezier(.16,1,.3,1);
-        }
-        .reveal.visible { opacity: 1; transform: translateY(0); }
-        .reveal.d1 { transition-delay: .1s; }
-        .reveal.d2 { transition-delay: .2s; }
-        .reveal.d3 { transition-delay: .3s; }
-        .reveal.d4 { transition-delay: .4s; }
-
-        /* Card hover */
-        .feature-card {
-            transition: all .4s cubic-bezier(.16,1,.3,1);
-            position: relative;
-            overflow: hidden;
-        }
-        .feature-card::before {
-            content: '';
-            position: absolute;
-            inset: 0;
-            background: linear-gradient(135deg, rgba(59,130,246,.12), rgba(167,139,250,.08));
-            opacity: 0;
-            transition: opacity .4s ease;
-            pointer-events: none;
-        }
-        .feature-card:hover {
-            transform: translateY(-8px);
-            border-color: rgba(96,165,250,.4);
-            box-shadow: 0 20px 60px -15px rgba(59,130,246,.4);
-        }
-        .feature-card:hover::before { opacity: 1; }
-        .feature-card:hover .feature-icon {
-            transform: scale(1.15) rotate(-5deg);
-            background: rgba(96,165,250,.2);
-            box-shadow: 0 0 30px rgba(96,165,250,.4);
-        }
-        .feature-icon {
-            transition: all .4s cubic-bezier(.16,1,.3,1);
+            transform: translateY(30px);
+            transition: all 0.7s cubic-bezier(0.16, 1, 0.3, 1);
         }
 
-        /* Buttons */
-        .btn-primary {
-            position: relative;
-            overflow: hidden;
-            transition: all .3s ease;
-        }
-        .btn-primary::after {
-            content: '';
-            position: absolute;
-            inset: 0;
-            background: linear-gradient(90deg, transparent, rgba(255,255,255,.25), transparent);
-            transform: translateX(-100%);
-            transition: transform .7s ease;
-        }
-        .btn-primary:hover::after { transform: translateX(100%); }
-        .btn-primary:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 15px 40px -10px rgba(59,130,246,.6);
+        .reveal.active {
+            opacity: 1;
+            transform: translateY(0);
         }
 
-        /* Nav link hover */
-        .nav-link { position: relative; }
-        .nav-link::after {
-            content: '';
-            position: absolute;
-            bottom: -4px;
-            left: 0;
-            width: 0;
-            height: 2px;
-            background: linear-gradient(90deg, #60a5fa, #a78bfa);
-            transition: width .3s ease;
-            border-radius: 2px;
-        }
-        .nav-link:hover::after { width: 100%; }
-
-        /* Terminal */
-        .terminal {
-            box-shadow: 0 30px 80px -20px rgba(37,99,235,.5), 0 0 0 1px rgba(59,130,246,.1);
-        }
-        .terminal-line {
-            opacity: 0;
-            animation: fadeInLine .5s ease forwards;
-        }
-        @keyframes fadeInLine {
-            to { opacity: 1; }
-        }
-        .cursor-blink::after {
-            content: '▊';
-            color: #60a5fa;
-            animation: blink 1s step-end infinite;
+        .btn-gold {
+            background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+            color: #0a0908;
+            transition: all 0.3s ease;
+            border: 1px solid #fbbf24;
         }
 
-        /* Logo glow */
-        .logo-glow {
-            filter: drop-shadow(0 0 20px rgba(96,165,250,.5));
-            transition: filter .4s ease, transform .4s ease;
-        }
-        .logo-glow:hover {
-            filter: drop-shadow(0 0 40px rgba(96,165,250,.9));
-            transform: scale(1.05);
-        }
-
-        /* Section badge */
-        .section-badge {
-            display: inline-flex;
-            align-items: center;
-            gap: .5rem;
-            padding: .4rem .9rem;
-            font-size: .75rem;
-            font-weight: 600;
-            letter-spacing: .05em;
-            text-transform: uppercase;
-            border-radius: 999px;
-            background: rgba(59,130,246,.08);
-            border: 1px solid rgba(59,130,246,.2);
-            color: #93c5fd;
-        }
-
-        /* Crypto pill */
-        .crypto-pill {
-            transition: all .3s ease;
-        }
-        .crypto-pill:hover {
-            background: rgba(96,165,250,.15);
-            border-color: rgba(96,165,250,.5);
+        .btn-gold:hover {
+            background: linear-gradient(135deg, #fcd34d 0%, #f59e0b 100%);
+            box-shadow: 0 0 25px rgba(245, 158, 11, 0.4);
             transform: translateY(-2px);
         }
 
-        /* Marquee */
-        .marquee {
-            display: flex;
-            gap: 3rem;
-            animation: marquee 30s linear infinite;
-            width: max-content;
-        }
-        @keyframes marquee {
-            from { transform: translateX(0); }
-            to { transform: translateX(-50%); }
+        .btn-outline {
+            background: transparent;
+            border: 1px solid rgba(245, 158, 11, 0.5);
+            color: #fcd34d;
+            transition: all 0.3s ease;
         }
 
-        /* Command chip */
-        .cmd-chip {
-            transition: all .25s ease;
-            cursor: default;
-        }
-        .cmd-chip:hover {
-            background: rgba(96,165,250,.15);
-            color: #dbeafe;
-            border-color: rgba(96,165,250,.5);
-            transform: translateY(-2px);
+        .btn-outline:hover {
+            background: rgba(245, 158, 11, 0.1);
+            border-color: #f59e0b;
+            box-shadow: 0 0 20px rgba(245, 158, 11, 0.2);
         }
 
-        /* Float animation for hero decoration */
-        @keyframes floatY {
-            0%,100% { transform: translateY(0) }
-            50% { transform: translateY(-14px) }
-        }
-        .float-y { animation: floatY 5s ease-in-out infinite; }
+        details > summary { list-style: none; cursor: pointer; }
+        details > summary::-webkit-details-marker { display: none; }
+        details[open] .chevron { transform: rotate(180deg); }
+        .chevron { transition: transform 0.3s ease; }
+        details[open] .faq-answer { animation: slideDown 0.3s ease-out forwards; }
 
-        /* Custom scrollbar */
-        ::-webkit-scrollbar { width: 10px; }
-        ::-webkit-scrollbar-track { background: #020617; }
-        ::-webkit-scrollbar-thumb { background: #1e293b; border-radius: 5px; }
-        ::-webkit-scrollbar-thumb:hover { background: #334155; }
-
-        /* Selection */
-        ::selection { background: rgba(96,165,250,.3); color: #fff; }
-
-        /* Feature icon container */
-        .icon-box {
-            width: 56px; height: 56px;
-            display: flex; align-items: center; justify-content: center;
-            border-radius: 14px;
-            background: rgba(59,130,246,.1);
-            border: 1px solid rgba(59,130,246,.2);
+        @keyframes slideDown {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
         }
 
-        /* Code highlight */
-        .code-key { color: #c084fc; }
-        .code-val { color: #60a5fa; }
-        .code-str { color: #34d399; }
-        .code-comment { color: #475569; }
-
-        /* Smooth border gradient on stat cards */
-        .stat-card {
-            position: relative;
-            background: rgba(15,23,42,.6);
-            border: 1px solid rgba(51,65,85,.6);
-            border-radius: 16px;
-            transition: all .4s ease;
-            overflow: hidden;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            min-width: 0;
-        }
-        .stat-card::before {
-            content: '';
-            position: absolute;
-            top: 0; left: 0; right: 0;
-            height: 2px;
-            background: linear-gradient(90deg, transparent, #60a5fa, #a78bfa, transparent);
-            transform: scaleX(0);
-            transition: transform .5s ease;
-        }
-        .stat-card:hover {
-            border-color: rgba(96,165,250,.3);
-            transform: translateY(-4px);
-        }
-        .stat-card:hover::before { transform: scaleX(1); }
-        .stat-value {
-            white-space: nowrap;
-            line-height: 1.1;
-            letter-spacing: -0.02em;
-        }
-        .stat-label {
-            line-height: 1.15;
-            text-align: center;
-            word-break: break-word;
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: #0a0908; }
+        ::-webkit-scrollbar-thumb { background: #b45309; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #f59e0b; }
+        
+        .code-keyword { color: #f472b6; }
+        .code-string { color: #34d399; }
+        .code-comment { color: #57534e; }
+        .code-number { color: #60a5fa; }
+        
+        .table-responsive {
+            width: 100%;
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
         }
     </style>
 </head>
-<body class="text-slate-100 antialiased">
+<body class="antialiased selection:bg-gold-500 selection:text-obsidian">
 
-    <!-- Animated background -->
-    <div class="mesh-bg">
-        <div class="mesh-blob blob-1"></div>
-        <div class="mesh-blob blob-2"></div>
-        <div class="mesh-blob blob-3"></div>
-    </div>
+    <div class="glow-blob top-0 left-1/2 -translate-x-1/2 -translate-y-1/2"></div>
+    <div class="glow-blob bottom-0 right-0 translate-x-1/3 translate-y-1/3" style="animation-delay: -4s;"></div>
     <div class="grid-overlay"></div>
 
-    <!-- ============ HEADER ============ -->
-    <header class="sticky top-0 z-50 backdrop-blur-xl bg-slate-950/70 border-b border-slate-800/80">
-        <div class="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
-            <a href="#" class="flex items-center gap-3 group">
-                <div class="logo-glow">
-                    <img src="LANMess.png" alt="LANMess Logo" class="w-9 h-9 rounded-lg object-contain bg-slate-900 p-1 border border-slate-800">
-                </div>
-                <span class="font-bold text-lg tracking-tight group-hover:text-brand-300 transition-colors">LANMess</span>
-                <span class="text-[10px] bg-brand-500/10 text-brand-300 border border-brand-500/25 px-2 py-0.5 rounded-full font-mono font-medium">v1.1.10</span>
+    <header class="fixed top-0 w-full z-50 border-b border-white/5 bg-obsidian/80 backdrop-blur-md">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 h-16 sm:h-20 flex items-center justify-between">
+            <a href="#" class="flex items-center group">
+                <span class="font-black text-2xl sm:text-3xl tracking-tighter text-transparent bg-clip-text bg-gradient-to-r from-white to-gray-400 group-hover:from-gold-300 group-hover:to-gold-500 transition-all duration-300">LANMess</span>
             </a>
-            <nav class="hidden md:flex items-center gap-8 text-sm text-slate-400">
-                <a href="#features" class="nav-link hover:text-white transition-colors">Features</a>
-                <a href="#security" class="nav-link hover:text-white transition-colors">Security</a>
-                <a href="#commands" class="nav-link hover:text-white transition-colors">Commands</a>
-                <a href="#install" class="nav-link hover:text-white transition-colors">Install</a>
+            
+            <nav class="hidden md:flex items-center gap-6 lg:gap-8 text-sm font-medium text-gray-400">
+                <a href="#why" class="hover:text-gold-300 transition-colors">Why LANMess</a>
+                <a href="#how-it-works" class="hover:text-gold-300 transition-colors">How it Works</a>
+                <a href="#architecture" class="hover:text-gold-300 transition-colors">Architecture</a>
+                <a href="#features" class="hover:text-gold-300 transition-colors">Features</a>
+                <a href="#faq" class="hover:text-gold-300 transition-colors">FAQ</a>
             </nav>
+            
             <div class="flex items-center gap-3">
-                <a href="https://github.com/virensahti-nl/lanmess/releases/latest" target="_blank" rel="noopener" class="btn-primary hidden sm:inline-flex items-center gap-2 bg-brand-600 hover:bg-brand-500 text-white px-4 py-2 rounded-lg text-sm font-semibold shadow-lg shadow-brand-600/25">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
-                    Download
-                </a>
-                <a href="https://github.com/virensahti-nl/lanmess" target="_blank" rel="noopener" class="inline-flex items-center gap-2 bg-slate-900/80 hover:bg-slate-800 border border-slate-700/80 hover:border-slate-600 px-3 py-2 rounded-lg text-sm font-medium transition-all duration-300 hover:-translate-y-0.5">
-                    <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M12 .3a12 12 0 0 0-3.8 23.4c.6.1.8-.3.8-.6v-2.2c-3.3.7-4-1.6-4-1.6-.6-1.4-1.4-1.8-1.4-1.8-1-.7.1-.7.1-.7 1.2.1 1.8 1.2 1.8 1.2 1 1.8 2.8 1.3 3.4 1 .1-.7.4-1.3.8-1.6-2.7-.3-5.5-1.3-5.5-6 0-1.3.5-2.3 1.2-3.2-.1-.3-.5-1.5.1-3.2 0 0 1-.3 3.3 1.2a11.5 11.5 0 0 1 6 0c2.3-1.5 3.3-1.2 3.3-1.2.7 1.7.3 2.9.1 3.2.8.8 1.2 1.9 1.2 3.2 0 4.6-2.8 5.6-5.5 6 .4.4.8 1.1.8 2.2v3.3c0 .3.2.7.8.6A12 12 0 0 0 12 .3"/></svg>
-                    GitHub
+                <a href="https://github.com/virensahti-nl/lanmess/releases/latest" target="_blank" rel="noopener" class="btn-gold px-4 sm:px-5 py-2 sm:py-2.5 rounded-lg text-xs sm:text-sm font-bold flex items-center gap-2">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+                    <span class="hidden sm:inline">Latest Release</span>
+                    <span class="sm:hidden">Download</span>
                 </a>
             </div>
         </div>
     </header>
 
-    <!-- ============ HERO ============ -->
-    <section class="relative pt-16 pb-24 md:pt-24 md:pb-32 overflow-hidden">
-        <div class="max-w-7xl mx-auto px-6">
-            <div class="grid lg:grid-cols-2 gap-16 items-center">
-
-                <!-- Left: copy -->
-                <div class="reveal">
-                    <div class="section-badge mb-6">
-                        <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
-                        No cloud · No internet · Zero trust
-                    </div>
-                    <h1 class="text-4xl md:text-5xl lg:text-6xl font-extrabold tracking-tight leading-[1.05] mb-6">
-                        Encrypted messaging,<br>
-                        <span class="gradient-text">right on your LAN.</span>
-                    </h1>
-                    <p class="text-lg text-slate-400 leading-relaxed mb-8 max-w-xl">
-                        A terminal-native, end-to-end encrypted messenger that lives entirely
-                        on your local network. Powered by X25519, AES-GCM and Ed25519 —
-                        with a slick TUI, live presence and no external server in sight.
-                    </p>
-                    <div class="flex flex-col sm:flex-row gap-4">
-                        <a href="https://github.com/virensahti-nl/lanmess/releases/latest" target="_blank" rel="noopener" class="btn-primary inline-flex items-center justify-center gap-2 bg-brand-600 hover:bg-brand-500 text-white font-semibold px-7 py-3.5 rounded-xl shadow-xl shadow-brand-600/30">
-                            <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
-                            Get Latest Release
-                        </a>
-                        <a href="#install" class="inline-flex items-center justify-center gap-2 bg-slate-900/60 hover:bg-slate-800/80 border border-slate-700/80 hover:border-slate-600 text-slate-200 font-semibold px-7 py-3.5 rounded-xl transition-all duration-300 hover:-translate-y-0.5">
-                            <svg class="w-5 h-5 text-emerald-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M8 9l3 3-3 3m5 0h3M5 20h14a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
-                            pip install lanmess
-                        </a>
-                    </div>
-
-                    <!-- quick stats -->
-                    <div class="mt-10 grid grid-cols-3 gap-3 sm:gap-4 w-full max-w-md">
-                        <div class="stat-card px-2 py-3 sm:px-3 sm:py-4">
-                            <div class="stat-value text-lg sm:text-xl md:text-2xl font-bold text-brand-300 mono">600k</div>
-                            <div class="stat-label text-[10px] sm:text-xs text-slate-500 mt-1.5">PBKDF2<br class="sm:hidden"> iterations</div>
+    <main class="relative z-10 pt-16 sm:pt-20">
+        
+        <section class="relative pt-16 pb-16 sm:pt-24 sm:pb-24 lg:pt-32 lg:pb-32 overflow-hidden flex items-center min-h-[85vh]">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 w-full">
+                <div class="grid lg:grid-cols-2 gap-10 lg:gap-16 items-center">
+                    
+                    <div class="reveal">
+                        <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-gold-500/30 bg-gold-500/5 text-gold-400 text-[10px] sm:text-xs font-mono mb-6 sm:mb-8 uppercase tracking-widest">
+                            <span class="w-2 h-2 rounded-full bg-gold-400 animate-pulse"></span>
+                            Based on Local Network
                         </div>
-                        <div class="stat-card px-2 py-3 sm:px-3 sm:py-4">
-                            <div class="stat-value text-base sm:text-lg md:text-2xl font-bold text-violet-300 mono">X25519</div>
-                            <div class="stat-label text-[10px] sm:text-xs text-slate-500 mt-1.5">key<br class="sm:hidden"> exchange</div>
+                        
+                        <h1 class="text-4xl sm:text-5xl lg:text-6xl xl:text-7xl font-black tracking-tighter leading-[1.05] mb-4 sm:mb-6">
+                            Whisper <br>
+                            <span class="text-gradient-gold">your secrets.</span>
+                        </h1>
+                        
+                        <p class="text-base sm:text-lg text-gray-400 leading-relaxed mb-8 max-w-lg font-light">
+                            A terminal-based, end-to-end encrypted messenger that operates entirely on your Local Area Network. No internet connection, no cloud servers, and zero telemetry. Built for security researchers and privacy advocates.
+                        </p>
+                        
+                        <div class="flex flex-col sm:flex-row gap-3 sm:gap-4 mb-10 sm:mb-16">
+                            <a href="#install" class="btn-gold px-6 sm:px-8 py-3.5 sm:py-4 rounded-xl text-sm sm:text-base font-bold flex items-center justify-center gap-2">
+                                Install
+                            </a>
+                            <a href="https://github.com/virensahti-nl/lanmess" target="_blank" rel="noopener" class="btn-outline px-6 sm:px-8 py-3.5 sm:py-4 rounded-xl text-sm sm:text-base font-bold flex items-center justify-center gap-2">
+                                View Source
+                            </a>
                         </div>
-                        <div class="stat-card px-2 py-3 sm:px-3 sm:py-4">
-                            <div class="stat-value text-lg sm:text-xl md:text-2xl font-bold text-emerald-300 mono">0</div>
-                            <div class="stat-label text-[10px] sm:text-xs text-slate-500 mt-1.5">cloud<br class="sm:hidden"> deps</div>
-                        </div>
-                    </div>
-                </div>
 
-                <!-- Right: terminal mockup -->
-                <div class="reveal d2">
-                    <div class="relative">
-                        <!-- Glow behind -->
-                        <div class="absolute -inset-4 bg-gradient-to-r from-brand-500/20 via-violet-500/20 to-cyan-500/20 rounded-3xl blur-3xl"></div>
-
-                        <div class="terminal relative bg-slate-950 border border-slate-800 rounded-2xl overflow-hidden">
-                            <!-- Title bar -->
-                            <div class="bg-slate-900/80 px-4 py-3 border-b border-slate-800 flex items-center gap-2">
-                                <div class="w-3 h-3 rounded-full bg-red-500/80"></div>
-                                <div class="w-3 h-3 rounded-full bg-yellow-500/80"></div>
-                                <div class="w-3 h-3 rounded-full bg-green-500/80"></div>
-                                <span class="text-xs text-slate-500 font-mono ml-3">lanmess — ~/LAN</span>
+                        <div class="grid grid-cols-3 gap-4 sm:gap-6 border-t border-white/10 pt-6 sm:pt-8">
+                            <div>
+                                <div class="text-xl sm:text-3xl font-bold text-white mb-1">LAN</div>
+                                <div class="text-[10px] sm:text-xs text-gray-500 uppercase tracking-wider">Required Network</div>
                             </div>
-                            <!-- Body -->
-                            <div class="p-5 font-mono text-[12px] md:text-sm leading-relaxed space-y-1.5 min-h-[340px]">
-                                <p class="text-slate-500 terminal-line" style="animation-delay:.1s">$ pip install lanmess</p>
-                                <p class="text-slate-500 terminal-line" style="animation-delay:.4s">$ lanmess</p>
-                                <p class="text-emerald-400 terminal-line" style="animation-delay:.8s">✓ Vault unlocked (Argon2id)</p>
-                                <p class="text-slate-400 terminal-line" style="animation-delay:1.1s">→ UDP discovery on <span class="text-brand-400">:50505</span></p>
-                                <p class="text-slate-400 terminal-line" style="animation-delay:1.4s">→ TCP listener on <span class="text-brand-400">:50510</span></p>
-                                <p class="text-brand-400 terminal-line" style="animation-delay:1.7s">● 2 peers discovered on LAN</p>
-                                <p class="text-slate-500 mt-3 terminal-line" style="animation-delay:2.1s">┌─ Contacts ─────────────────┐</p>
-                                <p class="text-slate-300 terminal-line" style="animation-delay:2.3s">│ <span class="text-emerald-400">●</span> alice <span class="text-brand-400">*</span>  (active)       │</p>
-                                <p class="text-slate-300 terminal-line" style="animation-delay:2.5s">│ <span class="text-emerald-400">●</span> bob                    │</p>
-                                <p class="text-slate-300 terminal-line" style="animation-delay:2.7s">│ <span class="text-yellow-400">○</span> carol  [waiting]         │</p>
-                                <p class="text-slate-500 terminal-line" style="animation-delay:2.9s">└──────────────────────────────┘</p>
-                                <p class="text-slate-400 terminal-line mt-2" style="animation-delay:3.2s"><span class="text-brand-400">alice ▸</span> hey — safety number matches ✓</p>
-                                <p class="text-slate-500 terminal-line cursor-blink" style="animation-delay:3.6s"><span class="text-brand-400">you ▸</span> </p>
+                            <div>
+                                <div class="text-xl sm:text-3xl font-bold text-white mb-1">0</div>
+                                <div class="text-[10px] sm:text-xs text-gray-500 uppercase tracking-wider">Cloud Dependencies</div>
+                            </div>
+                            <div>
+                                <div class="text-xl sm:text-3xl font-bold text-white mb-1">X25519</div>
+                                <div class="text-[10px] sm:text-xs text-gray-500 uppercase tracking-wider">Handshake</div>
                             </div>
                         </div>
                     </div>
+
+                    <div class="reveal relative w-full" style="transition-delay: 0.2s;">
+                        <div class="absolute -inset-4 sm:-inset-10 bg-gradient-to-tr from-gold-600/20 via-transparent to-bronze-600/20 blur-2xl sm:blur-3xl rounded-full"></div>
+                        
+                        <div class="terminal-window relative z-10">
+                            <div class="terminal-scan"></div>
+                            <div class="bg-[#14110f] px-3 sm:px-4 py-2 sm:py-3 border-b border-white/5 flex items-center justify-between">
+                                <div class="flex gap-1.5 sm:gap-2">
+                                    <div class="w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-full bg-bronze-600/30 border border-bronze-600/60"></div>
+                                    <div class="w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-full bg-gold-500/30 border border-gold-500/60"></div>
+                                    <div class="w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-full bg-gold-300/30 border border-gold-300/60"></div>
+                                </div>
+                                <span class="text-[10px] sm:text-xs text-gray-500 font-mono">user@lanmess: ~</span>
+                            </div>
+                            <div class="p-3 sm:p-6 font-mono text-[10px] sm:text-xs md:text-sm leading-relaxed overflow-x-auto">
+                                <div class="text-gray-500">$ lanmess</div>
+                                <div class="text-gold-400 mt-1 sm:mt-2">✓ Vault unlocked via Argon2id.</div>
+                                <div class="text-gray-400">→ Discovery started on port 50505 (UDP).</div>
+                                <div class="text-gray-400">→ TCP Listener bound to :50510</div>
+                                <div class="text-bronze-400 mt-1 sm:mt-2">● 2 peers discovered on LAN.</div>
+                                
+                                <div class="mt-3 sm:mt-6 border border-white/10 rounded-lg p-2 sm:p-4 bg-black/50">
+                                    <div class="text-[9px] sm:text-xs text-gray-500 mb-2 sm:mb-3">--- ACTIVE CONTACTS ---</div>
+                                    <div class="flex justify-between items-center mb-1 sm:mb-2">
+                                        <div class="text-white"><span class="text-gold-400">●</span> alice</div>
+                                        <div class="text-[9px] sm:text-xs text-gold-400 bg-gold-500/10 px-1.5 py-0.5 rounded">verified *</div>
+                                    </div>
+                                    <div class="flex justify-between items-center mb-1 sm:mb-2">
+                                        <div class="text-white"><span class="text-gold-400">●</span> bob</div>
+                                        <div class="text-[9px] sm:text-xs text-gray-500">active</div>
+                                    </div>
+                                    <div class="flex justify-between items-center">
+                                        <div class="text-gray-500"><span class="text-gray-600">○</span> carol</div>
+                                        <div class="text-[9px] sm:text-xs text-gray-600">waiting</div>
+                                    </div>
+                                </div>
+
+                                <div class="mt-3 sm:mt-6 text-[10px] sm:text-sm">
+                                    <span class="text-bronze-400">alice ▸</span> <span class="text-gray-300">hey, safety number matches ✓</span>
+                                </div>
+                                <div class="text-[10px] sm:text-sm mt-1">
+                                    <span class="text-gold-400">you ▸</span> <span class="animate-pulse">_</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
+            </div>
+        </section>
+
+        <div class="border-y border-white/5 bg-surface/50 py-3 sm:py-4 overflow-hidden relative w-full">
+            <div class="absolute inset-y-0 left-0 w-16 sm:w-32 bg-gradient-to-r from-obsidian to-transparent z-10"></div>
+            <div class="absolute inset-y-0 right-0 w-16 sm:w-32 bg-gradient-to-l from-obsidian to-transparent z-10"></div>
+            <div class="flex gap-4 sm:gap-8 animate-marquee w-max text-gray-500 text-[10px] sm:text-sm font-mono tracking-widest">
+                <span class="text-gold-400">AES-GCM-256</span><span>◆</span>
+                <span>X25519</span><span>◆</span>
+                <span>ED25519</span><span>◆</span>
+                <span class="text-gold-400">ARGON2ID</span><span>◆</span>
+                <span>HKDF-SHA256</span><span>◆</span>
+                <span>HMAC-CHAINS</span><span>◆</span>
+                <span class="text-gold-400">HASH-RATCHET</span><span>◆</span>
+                <span>TOTP-8</span><span>◆</span>
+                <span>LOCAL-NETWORK</span><span>◆</span>
+                <span class="text-gold-400">AES-GCM-256</span><span>◆</span>
+                <span>X25519</span><span>◆</span>
+                <span>ED25519</span><span>◆</span>
+                <span class="text-gold-400">ARGON2ID</span><span>◆</span>
+                <span>HKDF-SHA256</span><span>◆</span>
+                <span>HMAC-CHAINS</span><span>◆</span>
+                <span class="text-gold-400">HASH-RATCHET</span><span>◆</span>
+                <span>TOTP-8</span><span>◆</span>
+                <span>LOCAL-NETWORK</span><span>◆</span>
             </div>
         </div>
-    </section>
 
-    <!-- ============ MARQUEE STRIP ============ -->
-    <div class="border-y border-slate-900/80 bg-slate-950/60 py-5 overflow-hidden">
-        <div class="marquee text-slate-500 text-sm">
-            <div class="flex gap-12 items-center whitespace-nowrap">
-                <span class="mono">X25519</span><span class="text-brand-500/40">◆</span>
-                <span class="mono">AES-GCM</span><span class="text-brand-500/40">◆</span>
-                <span class="mono">Ed25519</span><span class="text-brand-500/40">◆</span>
-                <span class="mono">Argon2id</span><span class="text-brand-500/40">◆</span>
-                <span class="mono">Hash Ratchet</span><span class="text-brand-500/40">◆</span>
-                <span class="mono">HMAC Chains</span><span class="text-brand-500/40">◆</span>
-                <span class="mono">Safety Numbers</span><span class="text-brand-500/40">◆</span>
-                <span class="mono">TOTP</span><span class="text-brand-500/40">◆</span>
-                <span class="mono">UDP Discovery</span><span class="text-brand-500/40">◆</span>
-                <span class="mono">Padding 256B</span><span class="text-brand-500/40">◆</span>
-            </div>
-            <div class="flex gap-12 items-center whitespace-nowrap" aria-hidden="true">
-                <span class="mono">X25519</span><span class="text-brand-500/40">◆</span>
-                <span class="mono">AES-GCM</span><span class="text-brand-500/40">◆</span>
-                <span class="mono">Ed25519</span><span class="text-brand-500/40">◆</span>
-                <span class="mono">Argon2id</span><span class="text-brand-500/40">◆</span>
-                <span class="mono">Hash Ratchet</span><span class="text-brand-500/40">◆</span>
-                <span class="mono">HMAC Chains</span><span class="text-brand-500/40">◆</span>
-                <span class="mono">Safety Numbers</span><span class="text-brand-500/40">◆</span>
-                <span class="mono">TOTP</span><span class="text-brand-500/40">◆</span>
-                <span class="mono">UDP Discovery</span><span class="text-brand-500/40">◆</span>
-                <span class="mono">Padding 256B</span><span class="text-brand-500/40">◆</span>
-            </div>
-        </div>
-    </div>
-
-    <!-- ============ FEATURES ============ -->
-    <section id="features" class="py-24 md:py-32 max-w-7xl mx-auto px-6">
-        <div class="text-center max-w-2xl mx-auto mb-16 reveal">
-            <div class="section-badge mb-4">Features</div>
-            <h2 class="text-3xl md:text-4xl font-bold tracking-tight mb-4">
-                Built for people who take <span class="text-brand-400">privacy</span> seriously.
-            </h2>
-            <p class="text-slate-400 leading-relaxed">
-                Every packet on the wire is authenticated, padded, and ratcheted.
-                No telemetry. No phone home. Just peers on your subnet.
-            </p>
-        </div>
-
-        <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-            <!-- Card 1 -->
-            <div class="feature-card reveal bg-slate-900/40 border border-slate-800/80 rounded-2xl p-7">
-                <div class="feature-icon icon-box mb-5">
-                    <svg class="w-7 h-7 text-brand-400" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
-                </div>
-                <h3 class="text-xl font-semibold mb-3">End-to-End Encrypted</h3>
-                <p class="text-slate-400 text-sm leading-relaxed">
-                    X25519 ephemeral key exchange with per-session hash ratchets.
-                    Every message gets a fresh AES-GCM key. 256-byte padding on every payload.
-                </p>
-            </div>
-
-            <!-- Card 2 -->
-            <div class="feature-card reveal d1 bg-slate-900/40 border border-slate-800/80 rounded-2xl p-7">
-                <div class="feature-icon icon-box mb-5">
-                    <svg class="w-7 h-7 text-brand-400" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M8.111 16.404a5.5 5.5 0 017.778 0M12 20h.01m-7.08-7.071c3.904-3.905 10.236-3.905 14.141 0M1.394 9.393c5.857-5.857 15.355-5.857 21.213 0"/></svg>
-                </div>
-                <h3 class="text-xl font-semibold mb-3">Automatic Peer Discovery</h3>
-                <p class="text-slate-400 text-sm leading-relaxed">
-                    Zero-config UDP broadcast discovery on port 50505. Peers appear
-                    automatically on your LAN, or add them by IP and TOTP code.
-                </p>
-            </div>
-
-            <!-- Card 3 -->
-            <div class="feature-card reveal d2 bg-slate-900/40 border border-slate-800/80 rounded-2xl p-7">
-                <div class="feature-icon icon-box mb-5">
-                    <svg class="w-7 h-7 text-brand-400" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M8 9l3 3-3 3m5 0h3M5 20h14a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
-                </div>
-                <h3 class="text-xl font-semibold mb-3">Beautiful TUI</h3>
-                <p class="text-slate-400 text-sm leading-relaxed">
-                    A blazing-fast Terminal UI built on Textual. Live presence dots,
-                    typing indicators, notifications, message search, and full keyboard control.
-                </p>
-            </div>
-
-            <!-- Card 4 -->
-            <div class="feature-card reveal bg-slate-900/40 border border-slate-800/80 rounded-2xl p-7">
-                <div class="feature-icon icon-box mb-5">
-                    <svg class="w-7 h-7 text-brand-400" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
-                </div>
-                <h3 class="text-xl font-semibold mb-3">Identity Verification</h3>
-                <p class="text-slate-400 text-sm leading-relaxed">
-                    Fingerprint-based safety numbers let you verify contacts out-of-band.
-                    Mark contacts verified and enforce verified-only mode across the app.
-                </p>
-            </div>
-
-            <!-- Card 5 -->
-            <div class="feature-card reveal d1 bg-slate-900/40 border border-slate-800/80 rounded-2xl p-7">
-                <div class="feature-icon icon-box mb-5">
-                    <svg class="w-7 h-7 text-brand-400" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
-                </div>
-                <h3 class="text-xl font-semibold mb-3">Tamper-Evident Audit Log</h3>
-                <p class="text-slate-400 text-sm leading-relaxed">
-                    Every security event is appended to an HMAC-chained log with a
-                    genesis anchor. Silent tampering becomes mathematically detectable.
-                </p>
-            </div>
-
-            <!-- Card 6 -->
-            <div class="feature-card reveal d2 bg-slate-900/40 border border-slate-800/80 rounded-2xl p-7">
-                <div class="feature-icon icon-box mb-5">
-                    <svg class="w-7 h-7 text-brand-400" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-                </div>
-                <h3 class="text-xl font-semibold mb-3">PIN Lockout & Vault</h3>
-                <p class="text-slate-400 text-sm leading-relaxed">
-                    Master key wrapped with Argon2id(PIN). Escalating lockouts after
-                    5, 10, 20, 50 failures — up to a full day. No cloud recovery, by design.
-                </p>
-            </div>
-        </div>
-    </section>
-
-    <!-- ============ SECURITY ============ -->
-    <section id="security" class="py-24 md:py-32 bg-slate-950/50 border-y border-slate-900/80">
-        <div class="max-w-7xl mx-auto px-6">
-            <div class="grid lg:grid-cols-2 gap-16 items-center">
-
-                <div class="reveal">
-                    <div class="section-badge mb-4">Security</div>
-                    <h2 class="text-3xl md:text-4xl font-bold tracking-tight mb-6">
-                        Every layer auditable.<br>
-                        <span class="text-brand-400">Every byte defended.</span>
+        <section id="why" class="py-16 sm:py-24 relative">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6">
+                <div class="text-center max-w-3xl mx-auto mb-12 sm:mb-16 reveal">
+                    <h2 class="text-2xl sm:text-3xl md:text-4xl font-bold tracking-tight mb-4 sm:mb-6">
+                        Why choose <span class="text-gradient-gold">LANMess?</span>
                     </h2>
-                    <p class="text-slate-400 leading-relaxed mb-8">
-                        LANMess is built from primitives you can inspect. There is
-                        no black box, no remote relay, and no hidden telemetry channel.
+                    <p class="text-base sm:text-lg text-gray-400 font-light">
+                        The modern internet is built on centralization and data harvesting. LANMess is a return to localized, peer-to-peer communication where you control the infrastructure.
                     </p>
-                    <ul class="space-y-4 text-slate-300 text-sm">
-                        <li class="flex items-start gap-3 group">
-                            <span class="mt-0.5 flex-shrink-0 w-5 h-5 rounded-full bg-emerald-500/15 border border-emerald-500/30 flex items-center justify-center">
-                                <svg class="w-3 h-3 text-emerald-400" fill="none" stroke="currentColor" stroke-width="3" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
-                            </span>
-                            <span><strong class="text-white">Argon2id Vault:</strong> 64 MB memory, 3 passes, 4 lanes. Your PIN never leaves the device.</span>
-                        </li>
-                        <li class="flex items-start gap-3">
-                            <span class="mt-0.5 flex-shrink-0 w-5 h-5 rounded-full bg-emerald-500/15 border border-emerald-500/30 flex items-center justify-center">
-                                <svg class="w-3 h-3 text-emerald-400" fill="none" stroke="currentColor" stroke-width="3" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
-                            </span>
-                            <span><strong class="text-white">Ed25519 signatures</strong> on every frame, including control traffic — not just messages.</span>
-                        </li>
-                        <li class="flex items-start gap-3">
-                            <span class="mt-0.5 flex-shrink-0 w-5 h-5 rounded-full bg-emerald-500/15 border border-emerald-500/30 flex items-center justify-center">
-                                <svg class="w-3 h-3 text-emerald-400" fill="none" stroke="currentColor" stroke-width="3" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
-                            </span>
-                            <span><strong class="text-white">Replay protection:</strong> 60-second time window + monotonic per-chain counters.</span>
-                        </li>
-                        <li class="flex items-start gap-3">
-                            <span class="mt-0.5 flex-shrink-0 w-5 h-5 rounded-full bg-emerald-500/15 border border-emerald-500/30 flex items-center justify-center">
-                                <svg class="w-3 h-3 text-emerald-400" fill="none" stroke="currentColor" stroke-width="3" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
-                            </span>
-                            <span><strong class="text-white">Secure delete</strong> PRAGMA + zeroed key buffers on lock / shutdown.</span>
-                        </li>
-                    </ul>
-
-                    <div class="mt-8 flex flex-wrap gap-2">
-                        <span class="crypto-pill px-3 py-1.5 text-xs mono bg-slate-900 border border-slate-800 rounded-lg text-slate-400">HKDF-SHA256</span>
-                        <span class="crypto-pill px-3 py-1.5 text-xs mono bg-slate-900 border border-slate-800 rounded-lg text-slate-400">HMAC-SHA256</span>
-                        <span class="crypto-pill px-3 py-1.5 text-xs mono bg-slate-900 border border-slate-800 rounded-lg text-slate-400">TOTP-8</span>
-                        <span class="crypto-pill px-3 py-1.5 text-xs mono bg-slate-900 border border-slate-800 rounded-lg text-slate-400">constant-time compare</span>
-                    </div>
                 </div>
 
-                <div class="reveal d2">
-                    <div class="relative">
-                        <div class="absolute -inset-4 bg-gradient-to-r from-violet-500/10 via-brand-500/10 to-cyan-500/10 rounded-3xl blur-2xl"></div>
-                        <div class="relative bg-slate-950 border border-slate-800 rounded-2xl overflow-hidden">
-                            <div class="bg-slate-900/80 px-4 py-3 border-b border-slate-800 flex items-center justify-between">
-                                <span class="text-xs text-slate-500 font-mono">config.py</span>
-                                <span class="text-[10px] mono text-brand-400 px-2 py-0.5 rounded bg-brand-500/10 border border-brand-500/20">hardened defaults</span>
+                <div class="table-responsive glass-card rounded-xl sm:rounded-2xl reveal">
+                    <table class="min-w-full text-sm sm:text-base text-left border-collapse">
+                        <thead>
+                            <tr class="border-b border-white/10 bg-surface/50">
+                                <th class="p-3 sm:p-5 font-bold text-gray-300">Requirement</th>
+                                <th class="p-3 sm:p-5 font-bold text-gold-400 text-center">LANMess</th>
+                                <th class="p-3 sm:p-5 font-bold text-gray-500 text-center">Cloud Messengers</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-white/5 text-gray-400">
+                            <tr class="hover:bg-white/5 transition-colors">
+                                <td class="p-3 sm:p-5">Internet Connection Required</td>
+                                <td class="p-3 sm:p-5 text-center font-semibold text-white">No (if LAN Only)</td>
+                                <td class="p-3 sm:p-5 text-center">Yes</td>
+                            </tr>
+                            <tr class="hover:bg-white/5 transition-colors">
+                                <td class="p-3 sm:p-5">Data Leaves Your Network</td>
+                                <td class="p-3 sm:p-5 text-center font-semibold text-white">Never</td>
+                                <td class="p-3 sm:p-5 text-center">Always</td>
+                            </tr>
+                            <tr class="hover:bg-white/5 transition-colors">
+                                <td class="p-3 sm:p-5">Account / Phone Number Required</td>
+                                <td class="p-3 sm:p-5 text-center font-semibold text-white">None</td>
+                                <td class="p-3 sm:p-5 text-center">Usually</td>
+                            </tr>
+                            <tr class="hover:bg-white/5 transition-colors">
+                                <td class="p-3 sm:p-5">End-to-End Encryption</td>
+                                <td class="p-3 sm:p-5 text-center font-semibold text-gold-400">Yes (X25519)</td>
+                                <td class="p-3 sm:p-5 text-center">Mostly</td>
+                            </tr>
+                            <tr class="hover:bg-white/5 transition-colors">
+                                <td class="p-3 sm:p-5">Terminal User Interface (TUI)</td>
+                                <td class="p-3 sm:p-5 text-center font-semibold text-white">Native</td>
+                                <td class="p-3 sm:p-5 text-center">None</td>
+                            </tr>
+                            <tr class="hover:bg-white/5 transition-colors">
+                                <td class="p-3 sm:p-5">Auditable Open Source Code</td>
+                                <td class="p-3 sm:p-5 text-center font-semibold text-white">100%</td>
+                                <td class="p-3 sm:p-5 text-center">Rarely</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+        <section id="how-it-works" class="py-16 sm:py-24 bg-surface border-y border-white/5 relative">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6">
+                <div class="text-center max-w-2xl mx-auto mb-12 sm:mb-16 reveal">
+                    <h2 class="text-2xl sm:text-3xl md:text-4xl font-bold tracking-tight mb-4">How everything <span class="text-gradient-gold">works.</span></h2>
+                    <p class="text-sm sm:text-base text-gray-400 font-light">From installation to encrypted message delivery.</p>
+                </div>
+
+                <div class="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
+                    <div class="glass-card p-6 rounded-xl reveal">
+                        <div class="text-gold-500 font-black text-2xl mb-3">01</div>
+                        <h3 class="text-lg font-bold text-white mb-2">Vault Creation</h3>
+                        <p class="text-xs sm:text-sm text-gray-400 leading-relaxed">
+                            Upon first launch, you set a strong PIN. LANMess generates a random 32-byte master key and encrypts it using Argon2id derived from your PIN.
+                        </p>
+                    </div>
+                    <div class="glass-card p-6 rounded-xl reveal" style="transition-delay: 0.1s;">
+                        <div class="text-gold-500 font-black text-2xl mb-3">02</div>
+                        <h3 class="text-lg font-bold text-white mb-2">Peer Discovery</h3>
+                        <p class="text-xs sm:text-sm text-gray-400 leading-relaxed">
+                            The app broadcasts a UDP packet on port 50505. Other instances on the LAN hear this and cache your IP, port, and public keys automatically.
+                        </p>
+                    </div>
+                    <div class="glass-card p-6 rounded-xl reveal" style="transition-delay: 0.2s;">
+                        <div class="text-gold-500 font-black text-2xl mb-3">03</div>
+                        <h3 class="text-lg font-bold text-white mb-2">Secure Adding</h3>
+                        <p class="text-xs sm:text-sm text-gray-400 leading-relaxed">
+                            To add a peer, you exchange an 8-digit TOTP code. This proves you share the same local network and are intentionally connecting to each other.
+                        </p>
+                    </div>
+                    <div class="glass-card p-6 rounded-xl reveal" style="transition-delay: 0.3s;">
+                        <div class="text-gold-500 font-black text-2xl mb-3">04</div>
+                        <h3 class="text-lg font-bold text-white mb-2">Encrypted Chat</h3>
+                        <p class="text-xs sm:text-sm text-gray-400 leading-relaxed">
+                            A chat request triggers an X25519 ephemeral handshake. Once established, messages are encrypted with AES-GCM and signed with Ed25519.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="architecture" class="py-16 sm:py-24 relative">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6">
+                <div class="grid lg:grid-cols-2 gap-10 lg:gap-16 items-center">
+                    <div class="reveal">
+                        <h2 class="text-2xl sm:text-3xl md:text-4xl font-bold tracking-tight mb-4 sm:mb-6">
+                            Cryptographic <br>
+                            <span class="text-gradient-bronze">Architecture</span>
+                        </h2>
+                        <p class="text-sm sm:text-base text-gray-400 mb-6 sm:mb-8 font-light">
+                            LANMess does not rely on proprietary security through obscurity. It uses battle-tested, standard cryptographic primitives. Here is how a message is secured:
+                        </p>
+
+                        <div class="space-y-4 sm:space-y-6">
+                            <div class="flex gap-3 sm:gap-4">
+                                <div class="flex items-center justify-center w-8 h-8 sm:w-10 sm:h-10 rounded-full border border-gold-500/50 bg-obsidian text-gold-400 font-mono text-xs sm:text-sm shrink-0">1</div>
+                                <div>
+                                    <h4 class="font-bold text-white mb-1 text-sm sm:text-base">X25519 Handshake</h4>
+                                    <p class="text-xs sm:text-sm text-gray-400">An ephemeral key exchange creates a shared secret that is never sent over the network.</p>
+                                </div>
                             </div>
-                            <pre class="p-5 text-xs md:text-[13px] leading-relaxed overflow-x-auto"><code><span class="code-comment"># crypto primitives</span>
-<span class="code-key">PBKDF2_ITERATIONS</span>  = <span class="code-val">600_000</span>
-<span class="code-key">ARGON2_TIME_COST</span>   = <span class="code-val">3</span>
-<span class="code-key">ARGON2_MEMORY_COST</span> = <span class="code-val">64 * 1024</span>
-<span class="code-key">ARGON2_PARALLELISM</span> = <span class="code-val">4</span>
-
-<span class="code-comment"># traffic hygiene</span>
-<span class="code-key">PAD_BLOCK</span>          = <span class="code-val">256</span>
-<span class="code-key">MAX_FRAME_SIZE</span>     = <span class="code-val">64 * 1024</span>
-<span class="code-key">REPLAY_WINDOW</span>      = <span class="code-val">60</span>  <span class="code-comment"># seconds</span>
-
-<span class="code-comment"># lockout schedule</span>
-<span class="code-key">PIN_LOCKOUT_STEPS</span> = (
-  (<span class="code-val">5</span>,  <span class="code-val">30</span>),
-  (<span class="code-val">10</span>, <span class="code-val">300</span>),
-  (<span class="code-val">20</span>, <span class="code-val">3600</span>),
-  (<span class="code-val">50</span>, <span class="code-val">86400</span>),
-)
-
-<span class="code-str"># zero cloud dependencies.</span>
-<span class="code-str"># zero outbound traffic.</span>
-</code></pre>
+                            <div class="flex gap-3 sm:gap-4">
+                                <div class="flex items-center justify-center w-8 h-8 sm:w-10 sm:h-10 rounded-full border border-bronze-500/50 bg-obsidian text-bronze-400 font-mono text-xs sm:text-sm shrink-0">2</div>
+                                <div>
+                                    <h4 class="font-bold text-white mb-1 text-sm sm:text-base">HKDF Derivation</h4>
+                                    <p class="text-xs sm:text-sm text-gray-400">The shared secret is expanded into independent send and receive hash chains using HKDF-SHA256.</p>
+                                </div>
+                            </div>
+                            <div class="flex gap-3 sm:gap-4">
+                                <div class="flex items-center justify-center w-8 h-8 sm:w-10 sm:h-10 rounded-full border border-gold-600/50 bg-obsidian text-gold-500 font-mono text-xs sm:text-sm shrink-0">3</div>
+                                <div>
+                                    <h4 class="font-bold text-white mb-1 text-sm sm:text-base">AES-GCM & Hash Ratchet</h4>
+                                    <p class="text-xs sm:text-sm text-gray-400">Each message uses a fresh key from the ratchet, encrypts the padded payload with AES-GCM, and immediately advances the chain.</p>
+                                </div>
+                            </div>
+                            <div class="flex gap-3 sm:gap-4">
+                                <div class="flex items-center justify-center w-8 h-8 sm:w-10 sm:h-10 rounded-full border border-yellow-600/50 bg-obsidian text-yellow-500 font-mono text-xs sm:text-sm shrink-0">4</div>
+                                <div>
+                                    <h4 class="font-bold text-white mb-1 text-sm sm:text-base">Ed25519 Signatures</h4>
+                                    <p class="text-xs sm:text-sm text-gray-400">Every control frame and message is signed with your long-term identity key to prevent tampering.</p>
+                                </div>
+                            </div>
                         </div>
                     </div>
-                </div>
 
-            </div>
-        </div>
-    </section>
-
-    <!-- ============ COMMANDS ============ -->
-    <section id="commands" class="py-24 md:py-32 max-w-7xl mx-auto px-6">
-        <div class="text-center max-w-2xl mx-auto mb-16 reveal">
-            <div class="section-badge mb-4">TUI Reference</div>
-            <h2 class="text-3xl md:text-4xl font-bold tracking-tight mb-4">
-                Every action, <span class="text-brand-400">one keystroke away.</span>
-            </h2>
-            <p class="text-slate-400 leading-relaxed">
-                Slash commands for power users, hotkeys for speed.
-            </p>
-        </div>
-
-        <div class="grid md:grid-cols-2 gap-6">
-            <div class="reveal bg-slate-900/40 border border-slate-800/80 rounded-2xl p-6">
-                <h3 class="text-sm font-semibold text-slate-300 mb-4 flex items-center gap-2">
-                    <span class="w-1.5 h-1.5 rounded-full bg-brand-400"></span>
-                    Slash commands
-                </h3>
-                <div class="grid grid-cols-2 gap-2">
-                    <div class="cmd-chip px-3 py-2 rounded-lg bg-slate-950/60 border border-slate-800/80 mono text-[12px] text-slate-400"><span class="text-brand-400">/help</span></div>
-                    <div class="cmd-chip px-3 py-2 rounded-lg bg-slate-950/60 border border-slate-800/80 mono text-[12px] text-slate-400"><span class="text-brand-400">/menu</span></div>
-                    <div class="cmd-chip px-3 py-2 rounded-lg bg-slate-950/60 border border-slate-800/80 mono text-[12px] text-slate-400"><span class="text-brand-400">/addip</span></div>
-                    <div class="cmd-chip px-3 py-2 rounded-lg bg-slate-950/60 border border-slate-800/80 mono text-[12px] text-slate-400"><span class="text-brand-400">/address</span></div>
-                    <div class="cmd-chip px-3 py-2 rounded-lg bg-slate-950/60 border border-slate-800/80 mono text-[12px] text-slate-400"><span class="text-brand-400">/code</span></div>
-                    <div class="cmd-chip px-3 py-2 rounded-lg bg-slate-950/60 border border-slate-800/80 mono text-[12px] text-slate-400"><span class="text-brand-400">/verify</span></div>
-                    <div class="cmd-chip px-3 py-2 rounded-lg bg-slate-950/60 border border-slate-800/80 mono text-[12px] text-slate-400"><span class="text-brand-400">/find</span> <span class="text-slate-600">text</span></div>
-                    <div class="cmd-chip px-3 py-2 rounded-lg bg-slate-950/60 border border-slate-800/80 mono text-[12px] text-slate-400"><span class="text-brand-400">/reply</span> <span class="text-slate-600">id</span></div>
-                    <div class="cmd-chip px-3 py-2 rounded-lg bg-slate-950/60 border border-slate-800/80 mono text-[12px] text-slate-400"><span class="text-brand-400">/react</span> <span class="text-slate-600">id</span></div>
-                    <div class="cmd-chip px-3 py-2 rounded-lg bg-slate-950/60 border border-slate-800/80 mono text-[12px] text-slate-400"><span class="text-brand-400">/clear</span></div>
-                    <div class="cmd-chip px-3 py-2 rounded-lg bg-slate-950/60 border border-slate-800/80 mono text-[12px] text-slate-400"><span class="text-brand-400">/clearall</span></div>
-                    <div class="cmd-chip px-3 py-2 rounded-lg bg-slate-950/60 border border-slate-800/80 mono text-[12px] text-slate-400"><span class="text-brand-400">/stop</span></div>
-                    <div class="cmd-chip px-3 py-2 rounded-lg bg-slate-950/60 border border-slate-800/80 mono text-[12px] text-slate-400"><span class="text-brand-400">/del</span> <span class="text-slate-600">id</span></div>
-                </div>
-            </div>
-
-            <div class="reveal d1 bg-slate-900/40 border border-slate-800/80 rounded-2xl p-6">
-                <h3 class="text-sm font-semibold text-slate-300 mb-4 flex items-center gap-2">
-                    <span class="w-1.5 h-1.5 rounded-full bg-violet-400"></span>
-                    Hotkeys
-                </h3>
-                <div class="space-y-2">
-                    <div class="cmd-chip flex items-center justify-between px-3 py-2 rounded-lg bg-slate-950/60 border border-slate-800/80">
-                        <span class="text-xs text-slate-400">Open menu</span>
-                        <kbd class="mono text-[11px] px-2 py-0.5 rounded bg-slate-800 border border-slate-700 text-brand-300">M</kbd>
-                    </div>
-                    <div class="cmd-chip flex items-center justify-between px-3 py-2 rounded-lg bg-slate-950/60 border border-slate-800/80">
-                        <span class="text-xs text-slate-400">Add by IP</span>
-                        <kbd class="mono text-[11px] px-2 py-0.5 rounded bg-slate-800 border border-slate-700 text-brand-300">I</kbd>
-                    </div>
-                    <div class="cmd-chip flex items-center justify-between px-3 py-2 rounded-lg bg-slate-950/60 border border-slate-800/80">
-                        <span class="text-xs text-slate-400">Show add code</span>
-                        <kbd class="mono text-[11px] px-2 py-0.5 rounded bg-slate-800 border border-slate-700 text-brand-300">Ctrl+Z</kbd>
-                    </div>
-                    <div class="cmd-chip flex items-center justify-between px-3 py-2 rounded-lg bg-slate-950/60 border border-slate-800/80">
-                        <span class="text-xs text-slate-400">Start / Accept / Reject</span>
-                        <div class="flex gap-1">
-                            <kbd class="mono text-[11px] px-2 py-0.5 rounded bg-slate-800 border border-slate-700 text-brand-300">S</kbd>
-                            <kbd class="mono text-[11px] px-2 py-0.5 rounded bg-slate-800 border border-slate-700 text-brand-300">Y</kbd>
-                            <kbd class="mono text-[11px] px-2 py-0.5 rounded bg-slate-800 border border-slate-700 text-brand-300">X</kbd>
-                        </div>
-                    </div>
-                    <div class="cmd-chip flex items-center justify-between px-3 py-2 rounded-lg bg-slate-950/60 border border-slate-800/80">
-                        <span class="text-xs text-slate-400">Lock / Quit</span>
-                        <div class="flex gap-1">
-                            <kbd class="mono text-[11px] px-2 py-0.5 rounded bg-slate-800 border border-slate-700 text-brand-300">Ctrl+L</kbd>
-                            <kbd class="mono text-[11px] px-2 py-0.5 rounded bg-slate-800 border border-slate-700 text-brand-300">Ctrl+Q</kbd>
+                    <div class="reveal w-full" style="transition-delay: 0.2s;">
+                        <div class="terminal-window">
+                            <div class="bg-[#14110f] px-4 py-2 sm:py-3 border-b border-white/5 flex items-center justify-between">
+                                <span class="text-[10px] sm:text-xs text-gray-500 font-mono">tui.py</span>
+                                <span class="text-[9px] sm:text-[10px] text-gold-400 border border-gold-500/30 px-1.5 py-0.5 rounded font-mono">SECURE PAYLOAD</span>
+                            </div>
+                            <pre class="p-4 sm:p-6 text-[10px] sm:text-xs md:text-sm leading-relaxed overflow-x-auto text-gray-300"><code><span class="code-keyword">async def</span> <span class="text-bronze-400">send_chat_message</span>(self, text):
+    <span class="code-comment"># Derive one-time key</span>
+    msg_key = chain_message_key(send_chain)
+    
+    <span class="code-comment"># Pad to 256-byte block</span>
+    padded = pad_message(text.encode())
+    
+    <span class="code-comment"># Encrypt with AES-GCM</span>
+    nonce = os.urandom(<span class="code-number">12</span>)
+    ct = aes_gcm_encrypt(msg_key, padded, nonce, aad)
+    
+    <span class="code-comment"># Sign the frame</span>
+    sig = sign_bytes(self.ed_private, signed_data)
+    
+    <span class="code-comment"># Advance forward secrecy ratchet</span>
+    new_chain = chain_advance(send_chain)
+    
+    <span class="code-keyword">return</span> {
+        <span class="code-string">"nonce"</span>: base64.b64encode(nonce),
+        <span class="code-string">"ciphertext"</span>: base64.b64encode(ct),
+        <span class="code-string">"signature"</span>: base64.b64encode(sig)
+    }</code></pre>
                         </div>
                     </div>
                 </div>
             </div>
-        </div>
-    </section>
+        </section>
 
-    <!-- ============ INSTALL ============ -->
-    <section id="install" class="py-24 md:py-32 border-t border-slate-900/80">
-        <div class="max-w-4xl mx-auto px-6 text-center reveal">
-            <div class="section-badge mb-4 mx-auto">Install</div>
-            <h2 class="text-3xl md:text-5xl font-bold tracking-tight mb-4">
-                Ready in <span class="text-brand-400">one command.</span>
-            </h2>
-            <p class="text-slate-400 mb-10 text-lg">
-                Requires Python 3.9 or newer. No external services. No API keys.
-            </p>
+        <section id="features" class="py-16 sm:py-24 bg-surface border-t border-white/5 relative">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6">
+                <div class="text-center mb-12 sm:mb-16 reveal">
+                    <h2 class="text-2xl sm:text-3xl md:text-4xl font-bold tracking-tight mb-4">
+                        Engineered for <span class="text-gradient-gold">Privacy.</span>
+                    </h2>
+                    <p class="text-sm sm:text-base text-gray-400 font-light max-w-2xl mx-auto">
+                        A complete suite of security features designed for hostile network environments.
+                    </p>
+                </div>
 
-            <div class="relative group max-w-2xl mx-auto">
-                <div class="absolute -inset-1 bg-gradient-to-r from-brand-500/40 to-violet-500/40 rounded-2xl blur-xl opacity-60 group-hover:opacity-100 transition-opacity duration-500"></div>
-                <div class="relative bg-slate-950 border border-slate-800 rounded-2xl p-6 flex flex-col sm:flex-row items-center justify-between gap-4">
-                    <div class="flex items-center gap-3 w-full sm:w-auto">
-                        <span class="text-emerald-400 mono text-lg">$</span>
-                        <span class="mono text-slate-200 text-sm sm:text-base">pip install lanmess</span>
+                <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
+                    <div class="glass-card p-6 sm:p-8 rounded-xl reveal">
+                        <h3 class="text-base sm:text-lg font-bold mb-2 flex items-center gap-2 text-white">
+                            <svg class="w-5 h-5 text-gold-400 shrink-0" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M8 9l3 3-3 3m5 0h3M5 20h14a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+                            Terminal Native
+                        </h3>
+                        <p class="text-xs sm:text-sm text-gray-400 leading-relaxed">
+                            Built with Python and Textual. No web views, no Electron. A highly responsive, keyboard-driven interface.
+                        </p>
                     </div>
-                    <button onclick="navigator.clipboard.writeText('pip install lanmess'); this.textContent='Copied!'; setTimeout(()=>this.textContent='Copy', 1500)" class="w-full sm:w-auto px-4 py-2 text-xs font-semibold rounded-lg bg-slate-800 hover:bg-slate-700 border border-slate-700 transition-all duration-300 hover:-translate-y-0.5 text-slate-300">
-                        Copy
-                    </button>
+
+                    <div class="glass-card p-6 sm:p-8 rounded-xl reveal" style="transition-delay: 0.1s;">
+                        <h3 class="text-base sm:text-lg font-bold mb-2 flex items-center gap-2 text-white">
+                            <svg class="w-5 h-5 text-gold-400 shrink-0" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                            PIN Lockout
+                        </h3>
+                        <p class="text-xs sm:text-sm text-gray-400 leading-relaxed">
+                            Brute-forcing the vault is impractical. 5 failed attempts trigger a 30-second lockout. 50 attempts trigger a 24-hour lockout.
+                        </p>
+                    </div>
+
+                    <div class="glass-card p-6 sm:p-8 rounded-xl reveal" style="transition-delay: 0.2s;">
+                        <h3 class="text-base sm:text-lg font-bold mb-2 flex items-center gap-2 text-white">
+                            <svg class="w-5 h-5 text-gold-400 shrink-0" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                            Audit Log
+                        </h3>
+                        <p class="text-xs sm:text-sm text-gray-400 leading-relaxed">
+                            Security events are chained with HMAC-SHA256. The database cannot be silently modified without breaking the cryptographic chain.
+                        </p>
+                    </div>
+
+                    <div class="glass-card p-6 sm:p-8 rounded-xl reveal">
+                        <h3 class="text-base sm:text-lg font-bold mb-2 flex items-center gap-2 text-white">
+                            <svg class="w-5 h-5 text-gold-400 shrink-0" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M8.111 16.404a5.5 5.5 0 017.778 0M12 20h.01m-7.08-7.071c3.904-3.905 10.236-3.905 14.141 0M1.394 9.393c5.857-5.857 15.355-5.857 21.213 0"/></svg>
+                            Auto Discovery
+                        </h3>
+                        <p class="text-xs sm:text-sm text-gray-400 leading-relaxed">
+                            UDP broadcast finds peers instantly. No need to manually configure IP addresses for peers on the same subnet.
+                        </p>
+                    </div>
+
+                    <div class="glass-card p-6 sm:p-8 rounded-xl reveal" style="transition-delay: 0.1s;">
+                        <h3 class="text-base sm:text-lg font-bold mb-2 flex items-center gap-2 text-white">
+                            <svg class="w-5 h-5 text-gold-400 shrink-0" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
+                            Safety Numbers
+                        </h3>
+                        <p class="text-xs sm:text-sm text-gray-400 leading-relaxed">
+                            Compare a 60-digit fingerprint out-of-band to verify your contact's identity and prevent man-in-the-middle attacks.
+                        </p>
+                    </div>
+
+                    <div class="glass-card p-6 sm:p-8 rounded-xl reveal" style="transition-delay: 0.2s;">
+                        <h3 class="text-base sm:text-lg font-bold mb-2 flex items-center gap-2 text-white">
+                            <svg class="w-5 h-5 text-gold-400 shrink-0" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                            Secure Deletion
+                        </h3>
+                        <p class="text-xs sm:text-sm text-gray-400 leading-relaxed">
+                            SQLite PRAGMA secure_delete is enabled. Symmetric keys are zeroed out in memory upon app lock or termination.
+                        </p>
+                    </div>
                 </div>
             </div>
+        </section>
 
-            <div class="mt-16 grid sm:grid-cols-3 gap-4 text-left">
-                <a href="https://github.com/virensahti-nl/lanmess/releases/latest" target="_blank" rel="noopener" class="feature-card bg-slate-900/40 border border-slate-800/80 rounded-xl p-5">
-                    <div class="text-brand-400 mb-3">
-                        <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
-                    </div>
-                    <div class="font-semibold text-sm mb-1">Releases</div>
-                    <div class="text-xs text-slate-500">Standalone binaries & source</div>
-                </a>
-                <a href="https://github.com/virensahti-nl/lanmess" target="_blank" rel="noopener" class="feature-card bg-slate-900/40 border border-slate-800/80 rounded-xl p-5">
-                    <div class="text-brand-400 mb-3">
-                        <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24"><path d="M12 .3a12 12 0 0 0-3.8 23.4c.6.1.8-.3.8-.6v-2.2c-3.3.7-4-1.6-4-1.6-.6-1.4-1.4-1.8-1.4-1.8-1-.7.1-.7.1-.7 1.2.1 1.8 1.2 1.8 1.2 1 1.8 2.8 1.3 3.4 1 .1-.7.4-1.3.8-1.6-2.7-.3-5.5-1.3-5.5-6 0-1.3.5-2.3 1.2-3.2-.1-.3-.5-1.5.1-3.2 0 0 1-.3 3.3 1.2a11.5 11.5 0 0 1 6 0c2.3-1.5 3.3-1.2 3.3-1.2.7 1.7.3 2.9.1 3.2.8.8 1.2 1.9 1.2 3.2 0 4.6-2.8 5.6-5.5 6 .4.4.8 1.1.8 2.2v3.3c0 .3.2.7.8.6A12 12 0 0 0 12 .3"/></svg>
-                    </div>
-                    <div class="font-semibold text-sm mb-1">Source</div>
-                    <div class="text-xs text-slate-500">Read the code, inspect primitives</div>
-                </a>
-                <a href="https://github.com/virensahti-nl/lanmess/blob/main/LICENSE" target="_blank" rel="noopener" class="feature-card bg-slate-900/40 border border-slate-800/80 rounded-xl p-5">
-                    <div class="text-brand-400 mb-3">
-                        <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
-                    </div>
-                    <div class="font-semibold text-sm mb-1">MIT License</div>
-                    <div class="text-xs text-slate-500">Fully open, forever</div>
-                </a>
-            </div>
-        </div>
-    </section>
+        <section id="faq" class="py-16 sm:py-24 relative bg-obsidian">
+            <div class="max-w-5xl mx-auto px-4 sm:px-6">
+                <div class="text-center mb-12 sm:mb-16 reveal">
+                    <h2 class="text-3xl sm:text-4xl md:text-5xl font-bold tracking-tight mb-4">
+                        Deep Dive <span class="text-gradient-gold">FAQ</span>
+                    </h2>
+                    <p class="text-sm sm:text-base text-gray-400 font-light">Everything you need to know about LANMess. Mined directly from the source code.</p>
+                </div>
 
-    <!-- ============ FOOTER ============ -->
-    <footer class="border-t border-slate-900/80 py-12 mt-12">
-        <div class="max-w-7xl mx-auto px-6 flex flex-col md:flex-row items-center justify-between gap-6">
-            <div class="flex items-center gap-3">
-                <img src="LANMess.png" alt="LANMess Logo" class="w-6 h-6 rounded object-contain opacity-80">
-                <span class="text-sm text-slate-400">LANMess <span class="text-slate-600">v1.1.10</span></span>
+                <!-- FAQ Category 1: Setup & Vault -->
+                <div class="mb-10">
+                    <h3 class="text-xl sm:text-2xl font-bold text-gold-400 mb-6 border-b border-gold-500/20 pb-2">1. App Setup & The Vault</h3>
+                    <div class="space-y-3 sm:space-y-4">
+                        <details class="glass-card rounded-xl group">
+                            <summary class="flex items-center justify-between p-4 sm:p-6">
+                                <h4 class="text-sm sm:text-base font-bold text-gray-200 group-hover:text-gold-300 transition-colors">What is the "Group Code" used for during setup?</h4>
+                                <svg class="w-5 h-5 text-gray-500 chevron shrink-0 ml-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg>
+                            </summary>
+                            <div class="faq-answer px-4 sm:px-6 pb-5 sm:pb-6 text-xs sm:text-sm text-gray-400 leading-relaxed">
+                                The Group Code is used to derive the initial shared network key using <code>PBKDF2-HMAC-SHA256</code> with 600,000 iterations. This ensures that only users who know the Group Code can generate the same discovery tags and securely format their packets. It acts as a shared secret for the local network group.
+                            </div>
+                        </details>
+
+                        <details class="glass-card rounded-xl group">
+                            <summary class="flex items-center justify-between p-4 sm:p-6">
+                                <h4 class="text-sm sm:text-base font-bold text-gray-200 group-hover:text-gold-300 transition-colors">Why must my PIN be at least 12 characters long?</h4>
+                                <svg class="w-5 h-5 text-gray-500 chevron shrink-0 ml-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg>
+                            </summary>
+                            <div class="faq-answer px-4 sm:px-6 pb-5 sm:pb-6 text-xs sm:text-sm text-gray-400 leading-relaxed">
+                                Your PIN unlocks the local vault (which contains your private keys). The config enforces <code>PIN_MIN_LEN = 12</code> and requires at least 3 of: lowercase, uppercase, digit, symbol. A weak PIN makes the Argon2id encryption vulnerable to offline brute-forcing if your device is stolen.
+                            </div>
+                        </details>
+
+                        <details class="glass-card rounded-xl group">
+                            <summary class="flex items-center justify-between p-4 sm:p-6">
+                                <h4 class="text-sm sm:text-base font-bold text-gray-200 group-hover:text-gold-300 transition-colors">What encryption is used for my local database?</h4>
+                                <svg class="w-5 h-5 text-gray-500 chevron shrink-0 ml-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg>
+                            </summary>
+                            <div class="faq-answer px-4 sm:px-6 pb-5 sm:pb-6 text-xs sm:text-sm text-gray-400 leading-relaxed">
+                                Your SQLite database (<code>~/.lanmess/lanmess.db</code>) is fully encrypted. Every piece of data (identity, contacts, messages) is encrypted using <code>AES-GCM</code>. The master key for this data is wrapped using <code>Argon2id</code> (derived from your PIN) and stored in the vault table.
+                            </div>
+                        </details>
+
+                        <details class="glass-card rounded-xl group">
+                            <summary class="flex items-center justify-between p-4 sm:p-6">
+                                <h4 class="text-sm sm:text-base font-bold text-gray-200 group-hover:text-gold-300 transition-colors">What happens if I fail my PIN multiple times?</h4>
+                                <svg class="w-5 h-5 text-gray-500 chevron shrink-0 ml-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg>
+                            </summary>
+                            <div class="faq-answer px-4 sm:px-6 pb-5 sm:pb-6 text-xs sm:text-sm text-gray-400 leading-relaxed">
+                                LANMess implements escalating lockouts defined in <code>PIN_LOCKOUT_STEPS</code>:<br>
+                                - 5 failed attempts: 30-second lockout.<br>
+                                - 10 failed attempts: 5-minute lockout.<br>
+                                - 20 failed attempts: 1-hour lockout.<br>
+                                - 50 failed attempts: 24-hour lockout.<br>
+                                These are tracked in the database to prevent restarting the app to bypass them.
+                            </div>
+                        </details>
+                    </div>
+                </div>
+
+                <!-- FAQ Category 2: Networking & Discovery -->
+                <div class="mb-10">
+                    <h3 class="text-xl sm:text-2xl font-bold text-gold-400 mb-6 border-b border-gold-500/20 pb-2">2. Networking & Discovery</h3>
+                    <div class="space-y-3 sm:space-y-4">
+                        <details class="glass-card rounded-xl group">
+                            <summary class="flex items-center justify-between p-4 sm:p-6">
+                                <h4 class="text-sm sm:text-base font-bold text-gray-200 group-hover:text-gold-300 transition-colors">Can I use LANMess over a VPN like Tailscale or ZeroTier?</h4>
+                                <svg class="w-5 h-5 text-gray-500 chevron shrink-0 ml-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg>
+                            </summary>
+                            <div class="faq-answer px-4 sm:px-6 pb-5 sm:pb-6 text-xs sm:text-sm text-gray-400 leading-relaxed">
+                                Yes. LANMess operates on Layer 3 using UDP (port 50505) and TCP (ports 50510-50600). As long as your VPN creates a virtual LAN (Layer 2/3) where broadcast packets or direct IP routing can reach the peers, LANMess will function perfectly. You may need to use the "Add by IP" feature if UDP broadcast doesn't traverse the VPN.
+                            </div>
+                        </details>
+
+                        <details class="glass-card rounded-xl group">
+                            <summary class="flex items-center justify-between p-4 sm:p-6">
+                                <h4 class="text-sm sm:text-base font-bold text-gray-200 group-hover:text-gold-300 transition-colors">What happens if my peer's IP address changes?</h4>
+                                <svg class="w-5 h-5 text-gray-500 chevron shrink-0 ml-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg>
+                            </summary>
+                            <div class="faq-answer px-4 sm:px-6 pb-5 sm:pb-6 text-xs sm:text-sm text-gray-400 leading-relaxed">
+                                The UDP discovery mechanism automatically updates peer IP addresses every 2 seconds (<code>DISCOVERY_INTERVAL</code>). However, if you added the contact using "Add by IP", the contact is marked as <code>pinned</code>. Pinned contacts will <i>not</i> automatically update their IP. If the IP changes, you will have to re-add them manually.
+                            </div>
+                        </details>
+
+                        <details class="glass-card rounded-xl group">
+                            <summary class="flex items-center justify-between p-4 sm:p-6">
+                                <h4 class="text-sm sm:text-base font-bold text-gray-200 group-hover:text-gold-300 transition-colors">How does the 8-digit "Add Code" work?</h4>
+                                <svg class="w-5 h-5 text-gray-500 chevron shrink-0 ml-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg>
+                            </summary>
+                            <div class="faq-answer px-4 sm:px-6 pb-5 sm:pb-6 text-xs sm:text-sm text-gray-400 leading-relaxed">
+                                The 8-digit code is a <code>TOTP</code> (Time-Based One-Time Password) generated every 60 seconds (<code>LOGIN_CODE_PERIOD = 60</code>). When peer A wants to add peer B, A enters B's TOTP code. The code is verified using HMAC-SHA256 against the timestamp, proving that A and B share the same local network and that A knows B's current code. It prevents random scanning attacks.
+                            </div>
+                        </details>
+
+                        <details class="glass-card rounded-xl group">
+                            <summary class="flex items-center justify-between p-4 sm:p-6">
+                                <h4 class="text-sm sm:text-base font-bold text-gray-200 group-hover:text-gold-300 transition-colors">What ports do I need to open in my firewall?</h4>
+                                <svg class="w-5 h-5 text-gray-500 chevron shrink-0 ml-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg>
+                            </summary>
+                            <div class="faq-answer px-4 sm:px-6 pb-5 sm:pb-6 text-xs sm:text-sm text-gray-400 leading-relaxed">
+                                You need to allow:<br>
+                                - <strong>UDP 50505:</strong> For discovering peers (<code>DISCOVERY_PORT</code>).<br>
+                                - <strong>TCP 50510 - 50600:</strong> For sending and receiving actual messages (<code>TCP_PORT_RANGE</code>).<br>
+                                If you don't open these, peers will appear offline, or messages will fail to deliver.
+                            </div>
+                        </details>
+                    </div>
+                </div>
+
+                <!-- FAQ Category 3: Cryptography & Security -->
+                <div class="mb-10">
+                    <h3 class="text-xl sm:text-2xl font-bold text-gold-400 mb-6 border-b border-gold-500/20 pb-2">3. Cryptography & Security</h3>
+                    <div class="space-y-3 sm:space-y-4">
+                        <details class="glass-card rounded-xl group">
+                            <summary class="flex items-center justify-between p-4 sm:p-6">
+                                <h4 class="text-sm sm:text-base font-bold text-gray-200 group-hover:text-gold-300 transition-colors">What exactly are "Safety Numbers"?</h4>
+                                <svg class="w-5 h-5 text-gray-500 chevron shrink-0 ml-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg>
+                            </summary>
+                            <div class="faq-answer px-4 sm:px-6 pb-5 sm:pb-6 text-xs sm:text-sm text-gray-400 leading-relaxed">
+                                Safety numbers are a 60-digit fingerprint generated by hashing both your Ed25519 public key and your peer's Ed25519 public key. You must compare this number with your peer over a secure out-of-band channel (e.g., in person, or via a trusted phone call). If the numbers match, you are mathematically guaranteed that no Man-In-The-Middle (MITM) is intercepting your keys.
+                            </div>
+                        </details>
+
+                        <details class="glass-card rounded-xl group">
+                            <summary class="flex items-center justify-between p-4 sm:p-6">
+                                <h4 class="text-sm sm:text-base font-bold text-gray-200 group-hover:text-gold-300 transition-colors">How does the "Forward Secrecy" hash ratchet work?</h4>
+                                <svg class="w-5 h-5 text-gray-500 chevron shrink-0 ml-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg>
+                            </summary>
+                            <div class="faq-answer px-4 sm:px-6 pb-5 sm:pb-6 text-xs sm:text-sm text-gray-400 leading-relaxed">
+                                For every message sent or received, the symmetric encryption key is destroyed and replaced. The next key is generated by hashing the current key using HMAC-SHA256 (<code>chain_advance</code>). This means if an attacker steals your current key, they cannot decrypt any past messages, because the old keys were permanently deleted from memory.
+                            </div>
+                        </details>
+
+                        <details class="glass-card rounded-xl group">
+                            <summary class="flex items-center justify-between p-4 sm:p-6">
+                                <h4 class="text-sm sm:text-base font-bold text-gray-200 group-hover:text-gold-300 transition-colors">What does "Verified-only" mode do?</h4>
+                                <svg class="w-5 h-5 text-gray-500 chevron shrink-0 ml-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg>
+                            </summary>
+                            <div class="faq-answer px-4 sm:px-6 pb-5 sm:pb-6 text-xs sm:text-sm text-gray-400 leading-relaxed">
+                                When enabled in the Menu (<code>m-vonl</code>), LANMess will actively block any chat requests or messages from contacts that have not been explicitly marked as "verified" (where you've compared safety numbers). It is a strict zero-trust policy.
+                            </div>
+                        </details>
+
+                        <details class="glass-card rounded-xl group">
+                            <summary class="flex items-center justify-between p-4 sm:p-6">
+                                <h4 class="text-sm sm:text-base font-bold text-gray-200 group-hover:text-gold-300 transition-colors">What happens if a message signature fails to verify?</h4>
+                                <svg class="w-5 h-5 text-gray-500 chevron shrink-0 ml-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg>
+                            </summary>
+                            <div class="faq-answer px-4 sm:px-6 pb-5 sm:pb-6 text-xs sm:text-sm text-gray-400 leading-relaxed">
+                                If an incoming message fails Ed25519 signature verification, or if the AES-GCM decryption fails (indicating tampering), LANMess immediately blocks the contact. It assumes an active attack and shuts down communication with that peer to protect you. The event is logged in the Audit Log.
+                            </div>
+                        </details>
+                        
+                        <details class="glass-card rounded-xl group">
+                            <summary class="flex items-center justify-between p-4 sm:p-6">
+                                <h4 class="text-sm sm:text-base font-bold text-gray-200 group-hover:text-gold-300 transition-colors">How does replay protection work?</h4>
+                                <svg class="w-5 h-5 text-gray-500 chevron shrink-0 ml-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg>
+                            </summary>
+                            <div class="faq-answer px-4 sm:px-6 pb-5 sm:pb-6 text-xs sm:text-sm text-gray-400 leading-relaxed">
+                                Every message includes a sequential counter. If an attacker captures an old message and tries to send it again, LANMess checks the counter. If the counter is less than or equal to the last received counter, it rejects the message. There is also a 60-second time window check for control frames.
+                            </div>
+                        </details>
+                    </div>
+                </div>
+
+                <!-- FAQ Category 4: TUI & Commands -->
+                <div class="mb-10">
+                    <h3 class="text-xl sm:text-2xl font-bold text-gold-400 mb-6 border-b border-gold-500/20 pb-2">4. TUI Interface & Commands</h3>
+                    <div class="space-y-3 sm:space-y-4">
+                        <details class="glass-card rounded-xl group">
+                            <summary class="flex items-center justify-between p-4 sm:p-6">
+                                <h4 class="text-sm sm:text-base font-bold text-gray-200 group-hover:text-gold-300 transition-colors">What is the difference between "/clear" and "/clearall"?</h4>
+                                <svg class="w-5 h-5 text-gray-500 chevron shrink-0 ml-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg>
+                            </summary>
+                            <div class="faq-answer px-4 sm:px-6 pb-5 sm:pb-6 text-xs sm:text-sm text-gray-400 leading-relaxed">
+                                <strong>/clear</strong> deletes the messages <i>only on your local device</i>. The peer still has their copy.<br>
+                                <strong>/clearall</strong> sends a <code>CLEAR_REQUEST</code> to the peer. If the peer accepts, <i>both</i> sides wipe the conversation from their local databases. It requires a mutual agreement to prevent data loss.
+                            </div>
+                        </details>
+
+                        <details class="glass-card rounded-xl group">
+                            <summary class="flex items-center justify-between p-4 sm:p-6">
+                                <h4 class="text-sm sm:text-base font-bold text-gray-200 group-hover:text-gold-300 transition-colors">How do I completely reset LANMess?</h4>
+                                <svg class="w-5 h-5 text-gray-500 chevron shrink-0 ml-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg>
+                            </summary>
+                            <div class="faq-answer px-4 sm:px-6 pb-5 sm:pb-6 text-xs sm:text-sm text-gray-400 leading-relaxed">
+                                You can press <code>Ctrl+R</code> or open the Menu and select "Reset everything". This drops all tables (identity, contacts, messages, vault), performs a database VACUUM, and zeroes out the cryptographic keys in memory. It is irreversible.
+                            </div>
+                        </details>
+
+                        <details class="glass-card rounded-xl group">
+                            <summary class="flex items-center justify-between p-4 sm:p-6">
+                                <h4 class="text-sm sm:text-base font-bold text-gray-200 group-hover:text-gold-300 transition-colors">What do the contact statuses mean?</h4>
+                                <svg class="w-5 h-5 text-gray-500 chevron shrink-0 ml-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg>
+                            </summary>
+                            <div class="faq-answer px-4 sm:px-6 pb-5 sm:pb-6 text-xs sm:text-sm text-gray-400 leading-relaxed">
+                                Based on the exact source code in <code>tui.py</code>:<br><br>
+                                - <strong>[active]</strong>: The X25519 handshake is complete, the ratchet is set (<code>session_established=1</code>), and you can send messages.<br>
+                                - <strong>[waiting]</strong>: <code>pending == 1</code>. You sent an <i>add contact</i> request to them, and you are waiting for them to accept.<br>
+                                - <strong>[accept?]</strong>: <code>pending == 2</code>. They sent <i>you</i> an add contact request, and you need to press 'Y' to accept.<br>
+                                - <strong>[chat req]</strong>: <code>incoming_request == 1</code>. They want to start a chat with you.<br>
+                                - <strong>[legacy]</strong>: <code>chat_started</code> is true, but <code>session_established</code> is false. The chat started, but the secure session dropped (e.g., app crashed or network loss). Press 'S' to restart the handshake.
+                            </div>
+                        </details>
+
+                        <details class="glass-card rounded-xl group">
+                            <summary class="flex items-center justify-between p-4 sm:p-6">
+                                <h4 class="text-sm sm:text-base font-bold text-gray-200 group-hover:text-gold-300 transition-colors">What is the maximum message length I can send?</h4>
+                                <svg class="w-5 h-5 text-gray-500 chevron shrink-0 ml-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg>
+                            </summary>
+                            <div class="faq-answer px-4 sm:px-6 pb-5 sm:pb-6 text-xs sm:text-sm text-gray-400 leading-relaxed">
+                                The maximum message length is 8,192 characters (<code>MAX_MESSAGE_LEN = 8192</code>). If you try to send a longer message, LANMess will prevent it to avoid overwhelming the frame size limit.
+                            </div>
+                        </details>
+
+                        <details class="glass-card rounded-xl group">
+                            <summary class="flex items-center justify-between p-4 sm:p-6">
+                                <h4 class="text-sm sm:text-base font-bold text-gray-200 group-hover:text-gold-300 transition-colors">How do I accept a chat request or clear request?</h4>
+                                <svg class="w-5 h-5 text-gray-500 chevron shrink-0 ml-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg>
+                            </summary>
+                            <div class="faq-answer px-4 sm:px-6 pb-5 sm:pb-6 text-xs sm:text-sm text-gray-400 leading-relaxed">
+                                When you have a pending request (chat or clear), a yellow indicator appears next to the contact. Press <kbd>Y</kbd> to Accept or <kbd>X</kbd> to Reject. You can also do this via the Menu.
+                            </div>
+                        </details>
+                    </div>
+                </div>
+
+                <!-- FAQ Category 5: Troubleshooting -->
+                <div>
+                    <h3 class="text-xl sm:text-2xl font-bold text-gold-400 mb-6 border-b border-gold-500/20 pb-2">5. Troubleshooting</h3>
+                    <div class="space-y-3 sm:space-y-4">
+                        <details class="glass-card rounded-xl group">
+                            <summary class="flex items-center justify-between p-4 sm:p-6">
+                                <h4 class="text-sm sm:text-base font-bold text-gray-200 group-hover:text-gold-300 transition-colors">Why does it say "Message not delivered: no response"?</h4>
+                                <svg class="w-5 h-5 text-gray-500 chevron shrink-0 ml-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg>
+                            </summary>
+                            <div class="faq-answer px-4 sm:px-6 pb-5 sm:pb-6 text-xs sm:text-sm text-gray-400 leading-relaxed">
+                                This means the peer's TCP server is unreachable or blocked. Potential causes:<br>
+                                - They closed the app.<br>
+                                - Their firewall is blocking TCP ports 50510-50600.<br>
+                                - They are on a different subnet/VLAN.<br>
+                                - You are no longer on the same LAN.
+                            </div>
+                        </details>
+
+                        <details class="glass-card rounded-xl group">
+                            <summary class="flex items-center justify-between p-4 sm:p-6">
+                                <h4 class="text-sm sm:text-base font-bold text-gray-200 group-hover:text-gold-300 transition-colors">Why is my peer showing as offline?</h4>
+                                <svg class="w-5 h-5 text-gray-500 chevron shrink-0 ml-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg>
+                            </summary>
+                            <div class="faq-answer px-4 sm:px-6 pb-5 sm:pb-6 text-xs sm:text-sm text-gray-400 leading-relaxed">
+                                LANMess uses a presence system that pings every 3 seconds (<code>PRESENCE_INTERVAL</code>). If no response is received within 15 seconds (<code>ONLINE_WINDOW</code>), the peer is marked offline. Check if UDP port 50505 is open, or if they paused their presence in the menu.
+                            </div>
+                        </details>
+
+                        <details class="glass-card rounded-xl group">
+                            <summary class="flex items-center justify-between p-4 sm:p-6">
+                                <h4 class="text-sm sm:text-base font-bold text-gray-200 group-hover:text-gold-300 transition-colors">Why did I get blocked by a contact?</h4>
+                                <svg class="w-5 h-5 text-gray-500 chevron shrink-0 ml-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg>
+                            </summary>
+                            <div class="faq-answer px-4 sm:px-6 pb-5 sm:pb-6 text-xs sm:text-sm text-gray-400 leading-relaxed">
+                                If the app detects a signature failure, decryption failure, or severe replay attempt from your IP, it automatically blocks you and prevents further communication. This only happens if the cryptographic integrity of the session is compromised.
+                            </div>
+                        </details>
+
+                        <details class="glass-card rounded-xl group">
+                            <summary class="flex items-center justify-between p-4 sm:p-6">
+                                <h4 class="text-sm sm:text-base font-bold text-gray-200 group-hover:text-gold-300 transition-colors">What does the "Audit Log" warning mean?</h4>
+                                <svg class="w-5 h-5 text-gray-500 chevron shrink-0 ml-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg>
+                            </summary>
+                            <div class="faq-answer px-4 sm:px-6 pb-5 sm:pb-6 text-xs sm:text-sm text-gray-400 leading-relaxed">
+                                The app maintains an HMAC-chained audit log. If someone tries to manually delete or modify database rows, the chain breaks. A warning means your database has been tampered with outside of the app.
+                            </div>
+                        </details>
+                    </div>
+                </div>
+
             </div>
-            <p class="text-xs text-slate-500">
-                Licensed under the <a href="https://github.com/virensahti-nl/lanmess/blob/main/LICENSE" target="_blank" rel="noopener" class="text-slate-400 underline hover:text-brand-300 transition-colors">MIT License</a> · No tracking · No telemetry
-            </p>
+        </section>
+
+        <section id="install" class="py-16 sm:py-24 bg-surface border-t border-white/5 relative">
+            <div class="max-w-4xl mx-auto px-4 sm:px-6 text-center reveal">
+                <h2 class="text-2xl sm:text-4xl md:text-5xl font-black tracking-tight mb-4 sm:mb-6">
+                    Take back <span class="text-gradient-gold">control.</span>
+                </h2>
+                <p class="text-sm sm:text-lg text-gray-400 mb-8 sm:mb-12 font-light">
+                    No accounts. No subscriptions. No telemetry. <br class="hidden sm:inline">
+                    Requires Python 3.9+ on Windows, macOS, or Linux.
+                </p>
+
+                <div class="relative max-w-lg mx-auto group mb-8 sm:mb-12">
+                    <div class="absolute -inset-1 bg-gradient-to-r from-gold-500 to-bronze-600 rounded-xl sm:rounded-2xl blur-lg opacity-30 group-hover:opacity-60 transition-opacity duration-500"></div>
+                    <div class="relative bg-[#0a0908] border border-white/10 rounded-xl sm:rounded-2xl p-4 sm:p-6 flex flex-col sm:flex-row items-center justify-between gap-3 sm:gap-4">
+                        <div class="flex items-center gap-2 sm:gap-3 w-full sm:w-auto font-mono text-xs sm:text-base">
+                            <span class="text-gold-400">$</span>
+                            <span class="text-gray-200 select-all">pip install lanmess</span>
+                        </div>
+                        <button onclick="navigator.clipboard.writeText('pip install lanmess'); this.textContent='COPIED'; setTimeout(()=>this.textContent='COPY', 2000)" class="w-full sm:w-auto px-4 py-2 text-xs font-bold rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 transition-all duration-300 text-gray-300 font-mono tracking-widest">
+                            COPY
+                        </button>
+                    </div>
+                </div>
+
+                <div class="flex flex-col sm:flex-row justify-center gap-3 sm:gap-4">
+                    <a href="https://github.com/virensahti-nl/lanmess/releases/latest" target="_blank" rel="noopener" class="btn-gold px-6 sm:px-8 py-3 sm:py-4 rounded-xl text-sm sm:text-base font-bold flex items-center justify-center gap-2">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+                        Download Latest Release
+                    </a>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <footer class="border-t border-white/5 bg-[#050403] py-8 sm:py-12 relative z-10">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 flex flex-col md:flex-row items-center justify-between gap-4 sm:gap-6">
+            <div class="flex items-center">
+                <span class="font-black text-lg text-white">LANMess</span>
+            </div>
+            
+            <nav class="flex gap-4 sm:gap-8 text-xs sm:text-sm text-gray-500">
+                <a href="https://github.com/virensahti-nl/lanmess" target="_blank" class="hover:text-gold-400 transition-colors">GitHub</a>
+                <a href="https://github.com/virensahti-nl/lanmess/releases" target="_blank" class="hover:text-gold-400 transition-colors">Releases</a>
+                <a href="https://github.com/virensahti-nl/lanmess/blob/main/LICENSE" target="_blank" class="hover:text-gold-400 transition-colors">MIT License</a>
+            </nav>
+
+            <div class="text-[10px] sm:text-xs text-gray-600 font-mono text-center md:text-right">
+                LOCAL NETWORK ONLY. NO CLOUD. NO TRACKERS.
+            </div>
         </div>
     </footer>
 
-    <!-- Scroll reveal -->
     <script>
-        (function() {
-            const els = document.querySelectorAll('.reveal');
-            const io = new IntersectionObserver((entries) => {
-                entries.forEach(e => {
-                    if (e.isIntersecting) {
-                        e.target.classList.add('visible');
-                        io.unobserve(e.target);
-                    }
-                });
-            }, { threshold: 0.15, rootMargin: '0px 0px -60px 0px' });
-            els.forEach(el => io.observe(el));
-        })();
+        const observerOptions = {
+            root: null,
+            rootMargin: '0px',
+            threshold: 0.1
+        };
+
+        const observer = new IntersectionObserver((entries, observer) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('active');
+                    observer.unobserve(entry.target);
+                }
+            });
+        }, observerOptions);
+
+        document.querySelectorAll('.reveal').forEach(el => {
+            observer.observe(el);
+        });
+
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                const target = document.querySelector(this.getAttribute('href'));
+                if (target) {
+                    target.scrollIntoView({
+                        behavior: 'smooth',
+                        block: 'start'
+                    });
+                }
+            });
+        });
     </script>
 </body>
 </html>
